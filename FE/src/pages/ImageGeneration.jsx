@@ -1,50 +1,122 @@
-
 import { useState } from "react"
-import { Download, RefreshCw, ImageIcon, Wand2 } from 'lucide-react'
+import { Download, RefreshCw, ImageIcon, Wand2, ChartNoAxesColumnIncreasing } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import axios from "axios"  
 
 const ImageGeneration = () => {
   const [prompt, setPrompt] = useState("")
   const [negativePrompt, setNegativePrompt] = useState("")
-  const [style, setStyle] = useState("realistic")
-  const [size, setSize] = useState("1024x1024")
+ const [style, setStyle] = useState("photographic") 
+  const [size, setSize] = useState("512x512")
   const [steps, setSteps] = useState(30)
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedImage, setGeneratedImage] = useState(null)
-
-  const handleGenerate = () => {
+  const [aimodel, setAimodel] = useState("Ultra")
+  const [response, setResponse] = useState({})
+  const modelEndpoints = {
+    Ultra: import.meta.env.VITE_STABILITY_API_URL + "/ultra",
+    Normal: import.meta.env.VITE_STABILITY_API_URL + "/core",
+    Medium: import.meta.env.VITE_STABILITY_API_URL + "/sd3"
+  };
+  const handleGenerate = async() => {
     if (!prompt.trim()) {
-      alert("Please enter a prompt");
+      toast.error("Please enter a prompt");
       return;
     }
 
-    setIsGenerating(true)
+    setIsGenerating(true);
+    try {
+      const payload = {
+        prompt: prompt,
+        output_format: "webp",
+        style_preset: style,
+        width: parseInt(size.split('x')[0]),
+        height: parseInt(size.split('x')[1]),
+        steps: steps
+      };
 
-    // Simulate image generation
-    setTimeout(() => {
-      setGeneratedImage(`/placeholder.svg?height=512&width=512&text=Generated+Image`)
-      setIsGenerating(false)
+      if (negativePrompt) {
+        payload.negative_prompt = negativePrompt;
+      }
 
-      alert("Image generated successfully");
-    }, 2000)
+      const response = await axios.postForm(
+        modelEndpoints[aimodel],
+        axios.toFormData(payload),
+        {
+          validateStatus: undefined,
+          responseType: 'arraybuffer',
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_STABILITY_API_KEY}`,
+            'Accept': 'image/*'
+          }
+        }
+      );
+if(response.status === 402){ 
+  toast.error("API quota exceeded. please try again or try choosing a diffrent model or wait a few months : > .");
+}
+      if (response.status === 200) {
+        const base64Image = btoa(
+          new Uint8Array(response.data).reduce(
+            (data, byte) => data + String.fromCharCode(byte),
+            ''
+          )
+        );
+        
+        setGeneratedImage(`data:image/webp;base64,${base64Image}`);
+        toast.success("Image generated successfully!");
+      } else {
+        const errorMessage = new TextDecoder().decode(response.data);
+        throw new Error(errorMessage);
+      }
+    } catch(err) { 
+      console.error("Error generating image:", err);
+      toast.error( "Failed to generate image");
+    } finally {
+      setIsGenerating(false);
+    }
   }
 
   const handleDownload = () => {
-    alert("Download started");
+    try {
+      if (!generatedImage) {
+        toast.error("No image to download");
+        return;
+      }
+
+      // Create temporary link to download
+      const link = document.createElement('a');
+      link.href = generatedImage;
+      link.download = `generated-image-${Date.now()}.webp`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success("Download started");
+    } catch (err) {
+      console.error("Download error:", err);
+      toast.error("Failed to download image");
+    }
   }
 
   const styleOptions = [
-    { value: "realistic", label: "Realistic" },
-    { value: "anime", label: "Anime" },
+    { value: "photographic", label: "Photographic" },
     { value: "digital-art", label: "Digital Art" },
-    { value: "oil-painting", label: "Oil Painting" },
-    { value: "watercolor", label: "Watercolor" },
+    { value: "anime", label: "Anime" },
+    { value: "comic-book", label: "Comic Book" },
+    { value: "fantasy-art", label: "Fantasy Art" },
+    { value: "analog-film", label: "Analog Film" },
     { value: "pixel-art", label: "Pixel Art" },
+    { value: "neon-punk", label: "Neon Punk" },
+    { value: "isometric", label: "Isometric" },
+    { value: "line-art", label: "Line Art" },
+    { value: "origami", label: "Origami" },
+    { value: "3d-model", label: "3D Model" }
   ]
 
   const sizeOptions = [
@@ -91,6 +163,20 @@ const ImageGeneration = () => {
                       onChange={(e) => setNegativePrompt(e.target.value)}
                       className="h-20"
                     />
+                  </div>
+                  <div>
+                    <Label htmlFor="aimodel">AI Model</Label>
+                    <Select value={aimodel} onValueChange={setAimodel}>
+                      <SelectTrigger id="aimodel">
+                        <SelectValue placeholder="Select AI Model" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Ultra">Ultra Quality</SelectItem>
+                        <SelectItem value="Medium">Medium Quality</SelectItem>
+                        <SelectItem value="Normal">Normal Quality</SelectItem>
+                      </SelectContent>
+                    </Select>
+
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -144,6 +230,7 @@ const ImageGeneration = () => {
                       <span>Higher Quality</span>
                     </div>
                   </div>
+
 
                   <Button
                     onClick={handleGenerate}
