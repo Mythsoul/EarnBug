@@ -6,11 +6,13 @@ import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from 'react-hot-toast';
+import useAuthStore from '../store/authstore';
 
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   axios.defaults.withCredentials = true;
   const navigate = useNavigate();
+  const { setUser } = useAuthStore();
 
   const {
     register,
@@ -34,8 +36,9 @@ export default function LoginForm() {
       });
 
       if (response.data.success) {
+        setUser(response.data.user);
         toast.success("Successfully logged in");
-        if (response.data.user.verified === false) {
+        if (!response.data.user.verified) {
           navigate("/verify-email");
         } else {
           navigate("/");

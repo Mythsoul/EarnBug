@@ -1,0 +1,245 @@
+import { useState, useRef } from "react"
+import { Mic, MicOff, FileAudio, Copy, RefreshCw, Check, Upload } from 'lucide-react'
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+const VoiceToText = () => {
+  const [isRecording, setIsRecording] = useState(false)
+  const [isTranscribing, setIsTranscribing] = useState(false)
+  const [transcribedText, setTranscribedText] = useState("")
+  const [language, setLanguage] = useState("en-US")
+  const [audioFile, setAudioFile] = useState(null)
+  const [copied, setCopied] = useState(false)
+  const fileInputRef = useRef(null)
+
+  const handleStartRecording = () => {
+    setIsRecording(true)
+    alert("Recording started. Speak clearly into your microphone.");
+  }
+
+  const handleStopRecording = () => {
+    setIsRecording(false)
+    setIsTranscribing(true)
+
+    setTimeout(() => {
+      setTranscribedText(
+        "This is a sample transcription of what would be your recorded speech. In a real application, this would be the actual transcription of your voice recording.",
+      )
+      setIsTranscribing(false)
+
+      alert("Transcription complete");
+    }, 2000)
+  }
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setAudioFile(file)
+      setIsTranscribing(true)
+
+      setTimeout(() => {
+        setTranscribedText(
+          "This is a sample transcription ",
+        )
+        setIsTranscribing(false)
+
+        alert("Transcription complete");
+      }, 2000)
+    }
+  }
+
+  const handleCopyText = () => {
+    if (transcribedText) {
+      navigator.clipboard.writeText(transcribedText)
+      setCopied(true)
+
+      alert("Copied to clipboard");
+
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  const languageOptions = [
+    { value: "en-US", label: "English (US)" },
+    { value: "en-GB", label: "English (UK)" },
+    { value: "es-ES", label: "Spanish" },
+    { value: "fr-FR", label: "French" },
+    { value: "de-DE", label: "German" },
+    { value: "it-IT", label: "Italian" },
+    { value: "ja-JP", label: "Japanese" },
+    { value: "zh-CN", label: "Chinese (Simplified)" },
+  ]
+
+  return (
+    <div className="pt-24 pb-16 min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white sm:text-4xl">
+            Voice to Text Conversion
+          </h1>
+          <p className="mt-4 max-w-2xl mx-auto text-lg text-gray-600 dark:text-gray-400">
+            Convert speech to text with our accurate AI transcription service.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Input Section */}
+          <div className="space-y-6">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="language">Language</Label>
+                    <Select value={language} onValueChange={setLanguage}>
+                      <SelectTrigger id="language">
+                        <SelectValue placeholder="Select language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {languageOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <Label className="mb-2 block">Record Audio</Label>
+                      <div className="flex justify-center">
+                        <Button
+                          onClick={isRecording ? handleStopRecording : handleStartRecording}
+                          className={`h-24 w-24 rounded-full ${isRecording ? "bg-red-500 hover:bg-red-600" : "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"}`}
+                        >
+                          {isRecording ? <MicOff className="h-10 w-10" /> : <Mic className="h-10 w-10" />}
+                        </Button>
+                      </div>
+                      <p className="text-center mt-2 text-sm text-gray-600 dark:text-gray-400">
+                        {isRecording ? "Click to stop recording" : "Click to start recording"}
+                      </p>
+                    </div>
+
+                    <div className="text-center">
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <div className="w-full border-t border-gray-300 dark:border-gray-700"></div>
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                          <span className="px-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400">or</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="mb-2 block">Upload Audio File</Label>
+                      <div className="flex justify-center">
+                        <Button
+                          variant="outline"
+                          className="w-full h-20 border-dashed"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <div className="flex flex-col items-center">
+                            <Upload className="h-6 w-6 mb-2" />
+                            <span>{audioFile ? audioFile.name : "Click to upload audio file"}</span>
+                          </div>
+                        </Button>
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleFileUpload}
+                          accept="audio/*"
+                          className="hidden"
+                        />
+                      </div>
+                      <p className="text-center mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        Supports MP3, WAV, M4A, FLAC (max 10MB)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="text-lg font-medium mb-4">Tips for Better Transcription</h3>
+                <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                  <li>• Speak clearly and at a moderate pace</li>
+                  <li>• Minimize background noise when recording</li>
+                  <li>• Use a good quality microphone if possible</li>
+                  <li>• Select the correct language for better accuracy</li>
+                  <li>• For longer recordings, consider uploading an audio file</li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Output Section */}
+          <div>
+            <Card className="h-full flex flex-col">
+              <CardContent className="pt-6 flex-grow flex flex-col">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-medium">Transcribed Text</h3>
+                  {transcribedText && (
+                    <Button variant="ghost" size="sm" onClick={handleCopyText}>
+                      {copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
+                      {copied ? "Copied" : "Copy"}
+                    </Button>
+                  )}
+                </div>
+
+                {isTranscribing ? (
+                  <div className="flex-grow flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg p-8">
+                    <RefreshCw className="h-12 w-12 text-purple-600 animate-spin mb-4" />
+                    <p className="text-gray-700 dark:text-gray-300 text-center">Transcribing your audio...</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm text-center mt-2">
+                      This may take a few moments
+                    </p>
+                  </div>
+                ) : transcribedText ? (
+                  <div className="flex-grow flex flex-col">
+                    <Textarea
+                      value={transcribedText}
+                      onChange={(e) => setTranscribedText(e.target.value)}
+                      className="flex-grow min-h-[300px] resize-none"
+                    />
+                    <div className="mt-4 flex justify-between items-center">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Language: {languageOptions.find((l) => l.value === language)?.label}
+                      </p>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setTranscribedText("")
+                          setAudioFile(null)
+                        }}
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex-grow flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg p-8">
+                    <FileAudio className="h-16 w-16 text-gray-400 mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400 text-center">
+                      Your transcribed text will appear here
+                    </p>
+                    <p className="text-gray-400 dark:text-gray-500 text-sm text-center mt-2">
+                      Record or upload audio to get started
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default VoiceToText
