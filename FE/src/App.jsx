@@ -3,7 +3,6 @@ import { Toaster } from "react-hot-toast";
 import { useEffect } from "react";
 import axios from "axios";
 
-import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Logout from "./pages/Logout";
