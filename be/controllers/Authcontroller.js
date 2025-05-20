@@ -1,4 +1,4 @@
-import { CreateUser, JwtGenerator, Login } from "../models/authmodel.js";
+import { CreateUser, JwtGenerator, Login, verifyUser } from "../models/authmodel.js";
 import dotenv from "dotenv" 
 dotenv.config(); 
 
@@ -22,13 +22,23 @@ export const RegisterUser = async (req, res) => {
         if(!user) { 
             throw new Error("Error while Registring User"); 
         } 
-        req.session.user = user; 
-        const token = JwtGenerator(user);
+
+        // Only store minimal info for unverified users
+        const safeUser = {
+            id: user.id,
+            email: user.email,
+            username: user.username,
+            verified: false
+        };
+        
+        req.session.user = safeUser;
+        const token = JwtGenerator(safeUser);
         res.cookie("token", token, getCookieConfig());
+        
         res.status(200).json({
             success: true,
-            message: "user registered successfully", 
-            user: user
+            message: "Please check your email for verification code", 
+            user: safeUser // Only send safe user data
         });
     } catch(err){ 
         res.status(400).json({
@@ -48,20 +58,28 @@ export const LoginUser = async (req, res) => {
             });
         }
         const user = await Login(email, password);
+
         if(!user) { 
             return res.status(404).json({
                 success: false,
                 message: "User does not exist"
             });
         }
-        req.session.user = user; 
-        const token = JwtGenerator(user);
+        const safeUser = {
+            id: user.id,
+            email: user.email,
+            username: user.username,
+            verified: user.verified
+        };
+        
+        req.session.user = safeUser;
+        const token = JwtGenerator(safeUser);
         res.cookie("token", token, getCookieConfig());
-    
+
         res.status(200).json({
             success: true,
             message: "user logged in successfully", 
-            user: user
+            user: safeUser
         });
     } catch (error) { 
         res.status(400).json({
@@ -103,3 +121,41 @@ export const logout = async (req, res) => {
         });
     } 
 }
+
+export const verifyemail = async (req, res) => {
+    try {
+        const {code} = req.body;
+        const email = req.session.user.email;
+
+        const result = await verifyUser(email, code);
+        
+        if(result.success === false) {
+            return res.status(400).json({
+                success: false,
+                message: result.message
+            });
+        }
+        // Update session with verified user info   
+        const safeUser = {
+            id: req.session.user.id,
+            email: req.session.user.email,
+            username: req.session.user.username,
+            verified: true
+        };
+
+        req.session.user = safeUser;
+        const token = JwtGenerator(safeUser);
+        res.cookie("token", token, getCookieConfig());
+
+        res.status(200).json({
+            success: true,
+            message: "Email verified successfully",
+            user: safeUser
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+};

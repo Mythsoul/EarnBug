@@ -1,8 +1,8 @@
 import express from "express"   
 import passport from 'passport';
-import { LoginUser, logout, RegisterUser } from "../controllers/Authcontroller.js"
+import { LoginUser, logout, RegisterUser, verifyemail } from "../controllers/Authcontroller.js"
 import { Authmiddleware, preventAuthenticatedAccess, preventlogout } from "../middlewares/Authmiddleware.js";
-import { JwtGenerator } from "../models/authmodel.js";
+import { JwtGenerator} from "../models/authmodel.js";
 const router = express.Router();
 
 router.post("/api/auth/register" ,preventAuthenticatedAccess ,  RegisterUser);  
@@ -78,5 +78,7 @@ router.get("/api/auth/verify", Authmiddleware, async (req, res) => {
     });
   }
 }); 
+
+router.post("/api/auth/verify-email", verifyemail);
 
 export const Authroutes = router;

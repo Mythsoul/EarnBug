@@ -5,7 +5,6 @@ import { CreateUser, FindUserByEmail, Login } from '../../models/authmodel.js';
 import { Database } from '../db/db.js';
 
 export const setupPassport = () => {
-  // Add serialize/deserialize here
   passport.serializeUser((user, done) => {
     if (!user?.id) return done(new Error('No user ID found'));
     done(null, user.id);
