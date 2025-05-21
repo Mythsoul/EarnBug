@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useRef, useEffect } from "react"
@@ -7,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { toast } from "react-hot-toast"
 
 const ChatBot = () => {
   const [messages, setMessages] = useState([
@@ -25,30 +25,88 @@ const ChatBot = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
-  const handleSendMessage = () => {
-    if (!input.trim()) return
+  const handleSendMessage = async () => {
+    if (!input.trim()) return;
 
-    const userMessage = { role: "user", content: input }
-    setMessages((prev) => [...prev, userMessage])
-    setInput("")
-    setIsLoading(true)
+    const userMessage = { role: "user", content: input };
+    setMessages(prev => [...prev, userMessage]);
+    setInput("");
+    setIsLoading(true);
 
-    setTimeout(() => {
-      const botResponses = [
-        "I understand what you're asking. Let me help you with that.",
-        "That's an interesting question! Here's what I know about it.",
-        "I'd be happy to assist with that. Here's some information that might help.",
-        "Great question! Let me provide some insights on this topic.",
-        "I can definitely help with that. Here's my response.",
-      ]
+    try {
+      // Filter messages to include system role and proper message formatting
+      const messageHistory = [
+        { role: "system", content: "You are EarnBug Assistant, an AI helper. Always respond as the assistant only. Never pretend to be the user." },
+        ...messages.map(msg => ({
+          role: msg.role === "bot" ? "assistant" : "user",
+          content: msg.content
+        })),
+        { role: "user", content: input }
+      ];
 
-      const randomResponse = botResponses[Math.floor(Math.random() * botResponses.length)]
-      const botMessage = { role: "bot", content: randomResponse }
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'EarnBug Assistant'
+        },
+        body: JSON.stringify({
+          model: "meta-llama/llama-3.3-8b-instruct:free",
+          messages: messageHistory,
+          temperature: 0.7,
+          max_tokens: 1000,
+          stop: ["User:", "Human:"]
+        })
+      });
 
-      setMessages((prev) => [...prev, botMessage])
-      setIsLoading(false)
-    }, 1500)
-  }
+      if (!response.ok) {
+        throw new Error('Failed to get response');
+      }
+
+      const data = await response.json();
+      const botMessage = {
+        role: "bot",
+        content: data.choices[0].message.content.trim()
+      };
+
+      setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      console.error('Chat error:', error);
+      toast.error("Failed to get response. Please try again.");
+      
+      // Remove the user's message if we failed to get a response
+      setMessages(prev => prev.slice(0, -1));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Add chat history persistence
+  useEffect(() => {
+    // Load chat history on mount
+    const savedMessages = localStorage.getItem('chatHistory');
+    if (savedMessages) {
+      setMessages(JSON.parse(savedMessages));
+    }
+  }, []);
+
+  // Save messages whenever they change
+  useEffect(() => {
+    localStorage.setItem('chatHistory', JSON.stringify(messages));
+  }, [messages]);
+
+  // Update clear chat to also clear localStorage
+  const handleClearChat = () => {
+    const initialMessage = { 
+      role: "bot", 
+      content: "Hello! I'm EarnBug Assistant. How can I help you today?" 
+    };
+    setMessages([initialMessage]);
+    localStorage.removeItem('chatHistory');
+    toast.success("Chat cleared");
+  };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -57,25 +115,17 @@ const ChatBot = () => {
     }
   }
 
-  const handleStartRecording = () => {
-    setIsRecording(true)
-    alert("Voice input started. Speak clearly into your microphone.");
+  const handleStartRecording = async() => {
+  setIsRecording(true)
+   toast.success("Recording started") 
+
+   
   }
 
   const handleStopRecording = () => {
     setIsRecording(false)
 
-    setTimeout(() => {
-      setInput("This is a sample voice input that would be transcribed from your speech.")
-
-      alert("Voice input received");
-    }, 1000)
-  }
-
-  const handleClearChat = () => {
-    setMessages([{ role: "bot", content: "Hello! I'm EarnBug Assistant. How can I help you today?" }])
-
-    alert("Chat cleared");
+    toast.success("Recording stopped")
   }
 
   return (
@@ -174,39 +224,8 @@ const ChatBot = () => {
           </CardContent> 
         </Card>
 
-        <div className="mt-8">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Sample Questions</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Button
-              variant="outline"
-              className="justify-start h-auto py-2 px-4"
-              onClick={() => setInput("What AI services does EarnBug offer?")}
-            >
-              <span className="truncate text-left">What AI services does EarnBug offer?</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="justify-start h-auto py-2 px-4"
-              onClick={() => setInput("How can I generate an image using EarnBug?")}
-            >
-              <span className="truncate text-left">How can I generate an image using EarnBug?</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="justify-start h-auto py-2 px-4"
-              onClick={() => setInput("What file formats are supported for voice to text?")}
-            >
-              <span className="truncate text-left">What file formats are supported for voice to text?</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="justify-start h-auto py-2 px-4"
-              onClick={() => setInput("Can I customize the voice in text to speech?")}
-            >
-              <span className="truncate text-left">Can I customize the voice in text to speech?</span>
-            </Button>
-          </div>
-        </div>
+     
+        
       </div>
     </div>
   )
