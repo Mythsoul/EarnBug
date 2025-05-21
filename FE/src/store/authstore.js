@@ -6,9 +6,10 @@ const useAuthStore = create((set) => ({
   isLoading: false,
   
   setUser: (user) => set({
-    user: {
+    user: { 
       id: user.id,
       username: user.username,
+      email: user.email, 
       verified: user.verified
     },
     isLoggedIn: true,
@@ -24,7 +25,7 @@ const useAuthStore = create((set) => ({
   }),
 
   updateVerification: (verified) => set((state) => ({
-    user: state.user ? { ...state.user, verified } : null
+    user: state.user ? { ...state.user, verified } : null,
   }))
 }));
 

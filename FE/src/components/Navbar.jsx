@@ -1,14 +1,17 @@
-
-
 import { useState, useEffect } from "react"
 import { Link, Navigate, useNavigate } from "react-router-dom"
 import { Menu, X } from 'lucide-react'
 import { Button } from "@/components/ui/button"
+import useAuthStore from "@/store/authstore"
+import toast from "react-hot-toast"
+import VerifyEmailForm from "./verify-email-form"
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [showVerifyModal, setShowVerifyModal] = useState(false)
   const navigate = useNavigate();
+  const { user, isLoggedIn } = useAuthStore(); 
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,7 +30,40 @@ const Navbar = () => {
   navigate("/logout")
   } 
 
+  const renderAuthButton = () => {
+    if (!isLoggedIn) {
+      return (
+        <Link to="/login">
+          <Button className="ml-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white">
+            Login
+          </Button>
+        </Link>
+      );
+    }
+
+    if (!user?.verified) {
+      return (
+        <Button 
+          className="ml-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+          onClick={() => setShowVerifyModal(true)}
+        >
+          Verify Email
+        </Button>
+      );
+    }
+
+    return (
+      <Button 
+        className="ml-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+        onClick={() => navigate("/logout")}
+      >
+        Logout
+      </Button>
+    );
+  };
+
   return (
+    <>
     <nav
       className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? "bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm" : "bg-transparent"}`}
     >
@@ -73,9 +109,8 @@ const Navbar = () => {
               >
                 Chat Bot
               </Link>
-              {/* <Button variant="outline" onClick={handleLogout}>
-                Logout
-              </Button> */}
+              {renderAuthButton()}
+          
             </div>
           </div>
 
@@ -129,20 +164,54 @@ const Navbar = () => {
             >
               Chat Bot
             </Link>
-            {/* <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => {
-                handleLogout()
-                setIsMenuOpen(false)
-              }}
-            >
-              Logout
-            </Button> */}
+            {isLoggedIn ? (
+              !user?.verified ? (
+                <Button 
+                  className="ml-4 w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
+                  onClick={() => {
+                    setShowVerifyModal(true);
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  Verify Email
+                </Button>
+              ) : (
+                <Button 
+                  className="ml-4 w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
+                  onClick={() => {
+                    navigate("/logout");
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  Logout
+                </Button>
+              )
+            ) : (
+              <Link to="/login" className="w-full">
+                <Button 
+                  className="ml-4 w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Login
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       )}
     </nav>
+
+    {/* Verification Modal */}
+    {showVerifyModal && (
+      <VerifyEmailForm 
+        onVerified={() => {
+          setShowVerifyModal(false);
+          navigate("/");
+        }}
+        onClose={() => setShowVerifyModal(false)}
+      />
+    )}
+    </>
   )
 }
 

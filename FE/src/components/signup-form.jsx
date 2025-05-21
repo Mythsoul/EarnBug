@@ -1,13 +1,18 @@
 import { useState } from "react";
-  import toast from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { cn } from "../lib/utils";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import VerifyEmailForm from "./verify-email-form";
+import useAuthStore from "../store/authstore";
+
 export default function SignupForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
+  const { setUser } = useAuthStore();
 
   const {
     register,
@@ -23,57 +28,60 @@ export default function SignupForm() {
       confirmPassword: "",
     },
   });
-axios.defaults.withCredentials = true;
-const navigate = useNavigate();
+  
+  axios.defaults.withCredentials = true;
+  const navigate = useNavigate();
+  
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-     console.log("Registration data:", data); 
-     data.username = data.firstname + " " + data.lastname; 
+      console.log("Registration data:", data); 
+      data.username = data.firstname + " " + data.lastname; 
 
-     const response = await axios.post(import.meta.env.VITE_BE_URL + "/api/auth/register"  , { 
-      username : data.username,
-      email: data.email, 
-      password: data.password, 
+      const response = await axios.post(import.meta.env.VITE_BE_URL + "/api/auth/register", { 
+        username: data.username,
+        email: data.email, 
+        password: data.password, 
+        credential: true, 
+        withCredentials: true
+      });
       
-      credential: true, 
-      withCredentials: true
-      })
       console.log("Registration response:", response.data);
         
-        if (response.data.success) {
-          toast.success("Successfully registered");  
-            navigate("/verify-email"); 
-
-        } else {
-           console.error("Registration failed:", response.data.message);
-          
-          toast.error("Registration failed: " + response.data.message);  
-
-          }
+      if (response.data.success) {
+        setUser(response.data.user);
+        toast.success("Successfully registered! Please verify your email.");
+        setShowVerification(true);
+      } else {
+        console.error("Registration failed:", response.data.message);
+        toast.error("Registration failed: " + response.data.message);
+      }
     } catch (error) {
       console.error("Registration failed:", error);
-
-      toast.error("Registration failed: " + error.message);
+      toast.error("Registration failed: " + (error.response?.data?.message || error.message));
     } finally {
       setIsLoading(false);
     }
   };
 
+  if (showVerification) {
+    return <VerifyEmailForm />;
+  }
+
   return (
-    <div className="shadow-input mx-auto w-full max-w-md rounded-none bg-black p-4 md:rounded-2xl md:p-8">
-      <h2 className="text-xl font-bold text-neutral-200">Welcome to Earn Bug</h2>
-      <p className="mt-2 max-w-sm text-sm text-neutral-300">Create an account to get started with Earn Bug</p>
+    <div className="shadow-lg mx-auto w-full max-w-md rounded-lg bg-white dark:bg-zinc-900 p-6 border border-gray-200 dark:border-zinc-800">
+      <h2 className="text-xl font-bold text-gray-900 dark:text-white">Welcome to Earn Bug</h2>
+      <p className="mt-2 max-w-sm text-sm text-gray-600 dark:text-gray-400">Create an account to get started with Earn Bug</p>
 
       <form className="my-8" onSubmit={handleSubmit(onSubmit)}>
-        <div className="mb-4 flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2">
+        <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           <LabelInputContainer>
-            <Label htmlFor="firstname">First name</Label>
+            <Label htmlFor="firstname" className="text-gray-900 dark:text-white">First name</Label>
             <Input
               id="firstname"
               placeholder="Tyler"
               type="text"
+              className="border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
               {...register("firstname", {
                 required: "First name is required",
                 minLength: {
@@ -85,11 +93,12 @@ const navigate = useNavigate();
             {errors.firstname && <p className="text-sm text-red-500 mt-1">{errors.firstname.message}</p>}
           </LabelInputContainer>
           <LabelInputContainer>
-            <Label htmlFor="lastname">Last name</Label>
+            <Label htmlFor="lastname" className="text-gray-900 dark:text-white">Last name</Label>
             <Input
               id="lastname"
               placeholder="Durden"
               type="text"
+              className="border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
               {...register("lastname", {
                 required: "Last name is required",
                 minLength: {
@@ -103,15 +112,16 @@ const navigate = useNavigate();
         </div>
 
         <LabelInputContainer className="mb-4">
-          <Label htmlFor="email">Email Address</Label>
+          <Label htmlFor="email" className="text-gray-900 dark:text-white">Email Address</Label>
           <Input
             id="email"
             placeholder="you@example.com"
             type="email"
+            className="border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
             {...register("email", {
               required: "Email is required",
               pattern: {
-                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+.[A-Z]{2,}$/i,
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                 message: "Invalid email address",
               },
             })}
@@ -120,11 +130,12 @@ const navigate = useNavigate();
         </LabelInputContainer>
 
         <LabelInputContainer className="mb-4">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password" className="text-gray-900 dark:text-white">Password</Label>
           <Input
             id="password"
             placeholder="••••••••"
             type="password"
+            className="border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
             {...register("password", {
               required: "Password is required",
               minLength: {
@@ -135,23 +146,18 @@ const navigate = useNavigate();
                 value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=])[A-Za-z\d@#$%^&+=]{8,}$/,
                 message: "Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character",
               },
-              validate: (value) => {
-                if (value.length < 8) {
-                  return "Password must be at least 8 characters";
-                }
-                return true;
-              },
             })}
           />
           {errors.password && <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>}
         </LabelInputContainer>
 
-        <LabelInputContainer className="mb-8">
-          <Label htmlFor="confirmPassword">Confirm Password</Label>
+        <LabelInputContainer className="mb-6">
+          <Label htmlFor="confirmPassword" className="text-gray-900 dark:text-white">Confirm Password</Label>
           <Input
             id="confirmPassword"
             placeholder="••••••••"
             type="password"
+            className="border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
             {...register("confirmPassword", {
               required: "Please confirm your password",
               validate: (value) => value === watch("password") || "Passwords do not match",
@@ -161,7 +167,7 @@ const navigate = useNavigate();
         </LabelInputContainer>
 
         <button
-          className="group/btn relative block h-10 w-full rounded-md bg-gradient-to-br from-zinc-900 to-zinc-900 font-medium text-white shadow-[0px_1px_0px_0px_#27272a_inset,0px_-1px_0px_0px_#27272a_inset] disabled:opacity-70"
+          className="group relative block h-10 w-full rounded-md bg-blue-600 font-medium text-white hover:bg-blue-700 disabled:opacity-70 transition-colors"
           type="submit"
           disabled={isLoading}
         >
@@ -170,7 +176,7 @@ const navigate = useNavigate();
         </button>
 
         <div className="mt-4 text-center">
-          <p className="text-sm text-neutral-400">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Already have an account?{" "}
             <Link to="/login" className="text-blue-500 hover:underline">
               Log in
@@ -178,27 +184,27 @@ const navigate = useNavigate();
           </p>
         </div>
 
-        <div className="my-8 flex items-center">
-          <div className="flex-grow h-[1px] bg-gradient-to-r from-transparent via-neutral-700 to-transparent"></div>
-          <span className="mx-4 text-xs text-neutral-400">OR</span>
-          <div className="flex-grow h-[1px] bg-gradient-to-r from-transparent via-neutral-700 to-transparent"></div>
+        <div className="my-6 flex items-center">
+          <div className="flex-grow h-[1px] bg-gray-300 dark:bg-zinc-700"></div>
+          <span className="mx-4 text-xs text-gray-500 dark:text-gray-400">OR</span>
+          <div className="flex-grow h-[1px] bg-gray-300 dark:bg-zinc-700"></div>
         </div>
 
-        <div className="flex flex-col space-y-4">
+        <div className="flex flex-col space-y-3">
           <button
-            className="group/btn shadow-input relative flex h-10 w-full items-center justify-center space-x-2 rounded-md bg-zinc-900 px-4 font-medium text-white shadow-[0px_0px_1px_1px_#262626]"
+            className="group relative flex h-10 w-full items-center justify-center space-x-2 rounded-md bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
             type="button"
           >
-            <GitHubIcon className="h-4 w-4 text-neutral-300" />
-            <span className="text-sm text-neutral-300">Continue with GitHub</span>
+            <GitHubIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+            <span className="text-sm text-gray-700 dark:text-gray-300">Continue with GitHub</span>
             <BottomGradient />
           </button>
           <button
-            className="group/btn shadow-input relative flex h-10 w-full items-center justify-center space-x-2 rounded-md bg-zinc-900 px-4 font-medium text-white shadow-[0px_0px_1px_1px_#262626]"
+            className="group relative flex h-10 w-full items-center justify-center space-x-2 rounded-md bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
             type="button"
           >
-            <GoogleIcon className="h-4 w-4 text-neutral-300" />
-            <span className="text-sm text-neutral-300">Continue with Google</span>
+            <GoogleIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+            <span className="text-sm text-gray-700 dark:text-gray-300">Continue with Google</span>
             <BottomGradient />
           </button>
         </div>
@@ -210,8 +216,8 @@ const navigate = useNavigate();
 const BottomGradient = () => {
   return (
     <>
-      <span className="absolute inset-x-0 -bottom-px block h-px w-full bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-0 transition duration-500 group-hover/btn:opacity-100" />
-      <span className="absolute inset-x-10 -bottom-px mx-auto block h-px w-1/2 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-0 blur-sm transition duration-500 group-hover/btn:opacity-100" />
+      <span className="absolute inset-x-0 -bottom-px block h-px w-full bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-0 transition duration-500 group-hover:opacity-100" />
+      <span className="absolute inset-x-10 -bottom-px mx-auto block h-px w-1/2 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
     </>
   );
 };
@@ -251,7 +257,8 @@ const GoogleIcon = (props) => (
     strokeLinejoin="round"
     {...props}
   >
-    <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
-    <path d="M15.5 8.5L12 12m0 0L8.5 15.5M12 12L8.5 8.5m3.5 3.5l3.5 3.5" />
+    <circle cx="12" cy="12" r="10" />
+    <path d="M8 12 L16 12" />
+    <path d="M12 8 L12 16" />
   </svg>
 );
