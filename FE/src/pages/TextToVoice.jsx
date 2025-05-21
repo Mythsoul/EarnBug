@@ -1,4 +1,4 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Play, Pause, Volume2, Download, RefreshCw, FileText } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -6,10 +6,11 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
+import toast from "react-hot-toast"
 
 const TextToVoice = () => {
   const [text, setText] = useState("")
-  const [voice, setVoice] = useState("female-1")
+  const [voice, setVoice] = useState("David") // Changed from "female-1" to "David"
   const [speed, setSpeed] = useState(1)
   const [pitch, setPitch] = useState(1)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -17,21 +18,72 @@ const TextToVoice = () => {
   const [audioUrl, setAudioUrl] = useState(null)
   const audioRef = useRef(null)
 
-  const handleGenerate = () => {
+  const voiceOptions = [
+    { value: "David", label: "David (English-US)" },
+    { value: "Emma", label: "Emma (English-UK)" },
+    { value: "Susan", label: "Susan (English-AU)" },
+    { value: "Robert", label: "Robert (English-US)" },
+    { value: "Lisa", label: "Lisa (English-UK)" }
+  ]
+
+  const handleGenerate = async () => {
     if (!text.trim()) {
-      alert("Please enter some text");
+      toast.error("Please enter some text");
       return;
     }
 
-    setIsGenerating(true)
+    setIsGenerating(true);
+    try {
+      const response = await fetch('https://talkify.net/api/speech/v1', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': import.meta.env.VITE_TALKIFY_API_KEY,
+          'Accept': 'audio/mp3'
+        },
+        body: JSON.stringify({
+          text: text,
+          voice: voice,
+          format: 'mp3',
+        })
+      });
 
-    setTimeout(() => {
-      setAudioUrl("https://example.com/dummy-audio.mp3")
-      setIsGenerating(false)
+      if (!response.ok) {
+        throw new Error('Failed to generate audio');
+      }
 
-      alert("Audio generated successfully");
-    }, 2000)
+      const blob = await response.blob();
+      const audioUrl = URL.createObjectURL(blob);
+      setAudioUrl(audioUrl);
+      toast.success("Audio generated successfully!");
+    } catch (err) {
+      console.error("Error generating audio:", err);
+      toast.error("Error generating audio. Please try again.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleDownload = () => {
+    if (!audioUrl) return;
+    
+    const a = document.createElement('a');
+    a.href = audioUrl;
+    a.download = `talkify-audio-${Date.now()}.mp3`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    toast.success("Download started!");
   }
+
+  // Clean up object URL when component unmounts or when new audio is generated
+  useEffect(() => {
+    return () => {
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
+    };
+  }, [audioUrl]);
 
   const handlePlayPause = () => {
     if (audioRef.current) {
@@ -44,19 +96,8 @@ const TextToVoice = () => {
     }
   }
 
-  const handleDownload = () => {
-    alert("Download started");
-  }
-
-  const voiceOptions = [
-    { value: "female-1", label: "Female 1" },
-    { value: "female-2", label: "Female 2" },
-    { value: "male-1", label: "Male 1" },
-    { value: "male-2", label: "Male 2" },
-    { value: "child", label: "Child" },
-  ]
-
   return (
+    
     <div className="pt-24 pb-16 min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
