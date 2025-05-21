@@ -1,77 +1,150 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Mic, MicOff, FileAudio, Copy, RefreshCw, Check, Upload } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
+import toast from "react-hot-toast"
 const VoiceToText = () => {
   const [isRecording, setIsRecording] = useState(false)
   const [isTranscribing, setIsTranscribing] = useState(false)
   const [transcribedText, setTranscribedText] = useState("")
-  const [language, setLanguage] = useState("en-US")
+  const [language, setLanguage] = useState("en_us")
   const [audioFile, setAudioFile] = useState(null)
   const [copied, setCopied] = useState(false)
   const fileInputRef = useRef(null)
+  const [mediaRecorder, setMediaRecorder] = useState(null);
+  const [audioChunks, setAudioChunks] = useState([]);
 
-  const handleStartRecording = () => {
-    setIsRecording(true)
-    alert("Recording started. Speak clearly into your microphone.");
-  }
+  const languageOptions = [
+    { value: "en_us", label: "English (US)" },
+    { value: "en_uk", label: "English (UK)" },
+    { value: "es", label: "Spanish" },
+    { value: "fr", label: "French" },
+    { value: "de", label: "German" },
+    { value: "it", label: "Italian" },
+    { value: "pt", label: "Portuguese" },
+    { value: "nl", label: "Dutch" },
+    { value: "hi", label: "Hindi" },
+    { value: "ja", label: "Japanese" }
+  ];
+
+  const handleStartRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks = [];
+
+      recorder.ondataavailable = (e) => chunks.push(e.data);
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(chunks, { type: 'audio/mp3' });
+        await handleTranscription(audioBlob);
+      };
+
+      setMediaRecorder(recorder);
+      setAudioChunks(chunks);
+      recorder.start();
+      setIsRecording(true);
+      toast.success("Recording started!");
+    } catch (err) {
+      console.error("Error starting recording:", err);
+      toast.error("Could not access microphone");
+    }
+  };
 
   const handleStopRecording = () => {
-    setIsRecording(false)
-    setIsTranscribing(true)
-
-    setTimeout(() => {
-      setTranscribedText(
-        "This is a sample transcription of what would be your recorded speech. In a real application, this would be the actual transcription of your voice recording.",
-      )
-      setIsTranscribing(false)
-
-      alert("Transcription complete");
-    }, 2000)
-  }
-
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      setAudioFile(file)
-      setIsTranscribing(true)
-
-      setTimeout(() => {
-        setTranscribedText(
-          "This is a sample transcription ",
-        )
-        setIsTranscribing(false)
-
-        alert("Transcription complete");
-      }, 2000)
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+      mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      setIsRecording(false);
     }
-  }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size must be less than 10MB");
+      return;
+    }
+
+    await handleTranscription(file);
+  };
+
+  const handleTranscription = async (audioFile) => {
+    setIsTranscribing(true);
+    try {
+      // Upload audio file
+      const uploadUrl = 'https://api.assemblyai.com/v2/upload';
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': import.meta.env.VITE_ASSEMBLYAI_API_KEY
+        },
+        body: audioFile
+      });
+
+      if (!uploadResponse.ok) throw new Error('Upload failed');
+      const { upload_url } = await uploadResponse.json();
+      toast.success("Audio uploaded successfully!");
+
+      // Request transcription
+      const transcribeUrl = 'https://api.assemblyai.com/v2/transcript';
+      const transcribeResponse = await fetch(transcribeUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': import.meta.env.VITE_ASSEMBLYAI_API_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          audio_url: upload_url,
+          language_code: language
+        })
+      });
+
+      if (!transcribeResponse.ok) throw new Error('Transcription request failed');
+      const { id: transcriptId } = await transcribeResponse.json();
+
+      // Poll for results
+      while (true) {
+        const pollingResponse = await fetch(
+          `https://api.assemblyai.com/v2/transcript/${transcriptId}`,
+          { headers: { 'Authorization': import.meta.env.VITE_ASSEMBLYAI_API_KEY }}
+        );
+
+        if (!pollingResponse.ok) throw new Error('Polling failed');
+        const result = await pollingResponse.json();
+
+        if (result.status === 'completed') {
+          setTranscribedText(result.text);
+          toast.success("Transcription complete!");
+          break;
+        } else if (result.status === 'error') {
+          throw new Error(result.error);
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    } catch (err) {
+      console.error("Transcription error:", err);
+      toast.error(err.message || "Failed to transcribe audio");
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
 
   const handleCopyText = () => {
     if (transcribedText) {
       navigator.clipboard.writeText(transcribedText)
       setCopied(true)
 
-      alert("Copied to clipboard");
+      toast.success("Copied to clipboard");
 
       setTimeout(() => setCopied(false), 2000)
     }
   }
-
-  const languageOptions = [
-    { value: "en-US", label: "English (US)" },
-    { value: "en-GB", label: "English (UK)" },
-    { value: "es-ES", label: "Spanish" },
-    { value: "fr-FR", label: "French" },
-    { value: "de-DE", label: "German" },
-    { value: "it-IT", label: "Italian" },
-    { value: "ja-JP", label: "Japanese" },
-    { value: "zh-CN", label: "Chinese (Simplified)" },
-  ]
 
   return (
     <div className="pt-24 pb-16 min-h-screen bg-gray-50 dark:bg-gray-900">
