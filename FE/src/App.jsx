@@ -14,6 +14,8 @@ import ChatBot from "@/pages/ChatBot"
 import HomePage from "@/pages/HomePage"
 import Navbar from "@/components/Navbar";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { ForwardRoutes } from "./components/ForwardRoutes";
 
 function App() {
   const { setUser, setLoading } = useAuthStore();
@@ -53,13 +55,45 @@ axios.defaults.withCredentials = true;
           <main className="flex-grow">
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/logout" element={<Logout />} />
-          <Route path="/image-generation" element={<ImageGeneration />} />
-          <Route path="/text-to-voice" element={<TextToVoice />} />
-          <Route path="/voice-to-text" element={<VoiceToText />} />
-          <Route path="/chatbot" element={<ChatBot />} />
+          
+          {/* Forward Routes - Redirect if logged in */}
+          <Route path="/login" element={
+            <ForwardRoutes>
+              <Login />
+            </ForwardRoutes>
+          } />
+          <Route path="/signup" element={
+            <ForwardRoutes>
+              <Signup />
+            </ForwardRoutes>
+          } />
+
+          {/* Protected Routes - Require authentication */}
+          <Route path="/logout" element={
+            <ProtectedRoute>
+              <Logout />
+            </ProtectedRoute>
+          } />
+          <Route path="/image-generation" element={
+            <ProtectedRoute>
+              <ImageGeneration />
+            </ProtectedRoute>
+          } />
+          <Route path="/text-to-voice" element={
+            <ProtectedRoute>
+              <TextToVoice />
+            </ProtectedRoute>
+          } />
+          <Route path="/voice-to-text" element={
+            <ProtectedRoute>
+              <VoiceToText />
+            </ProtectedRoute>
+          } />
+          <Route path="/chatbot" element={
+            <ProtectedRoute>
+              <ChatBot />
+            </ProtectedRoute>
+          } />
         </Routes>
           </main>
         </div>  

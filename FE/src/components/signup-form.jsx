@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import toast from 'react-hot-toast';
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
@@ -8,11 +8,13 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import VerifyEmailForm from "./verify-email-form";
 import useAuthStore from "../store/authstore";
+import { Loader2 } from 'lucide-react';
+import Loader from "./Loader";
 
 export default function SignupForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
-  const { setUser } = useAuthStore();
+  const { setUser, isLoggedIn, user  , isLoading: authLoading} = useAuthStore();
 
   const {
     register,
@@ -32,40 +34,69 @@ export default function SignupForm() {
   axios.defaults.withCredentials = true;
   const navigate = useNavigate();
   
+  // Check if user is already logged in but not verified
+  useEffect(() => {
+
+    if (isLoggedIn && user && !user.verified && !authLoading) {
+      setShowVerification(true);
+      toast.error("Please verify your email to use the services", {
+        duration: 4000,
+      });
+    }
+  }, []);
+  
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      console.log("Registration data:", data); 
-      data.username = data.firstname + " " + data.lastname; 
+      const username = `${data.firstname} ${data.lastname}`.trim();
+      const payload = {
+        username,
+        email: data.email,
+        password: data.password
+      };
 
-      const response = await axios.post(import.meta.env.VITE_BE_URL + "/api/auth/register", { 
-        username: data.username,
-        email: data.email, 
-        password: data.password, 
-        credential: true, 
-        withCredentials: true
-      });
-      
-      console.log("Registration response:", response.data);
-        
+      const response = await axios.post(
+        `${import.meta.env.VITE_BE_URL}/api/auth/register`,
+        payload,
+        {
+          withCredentials: true
+        }
+      );
+
       if (response.data.success) {
         setUser(response.data.user);
-        toast.success("Successfully registered! Please verify your email.");
+        toast.success(response.data.message);
         setShowVerification(true);
-      } else {
-        console.error("Registration failed:", response.data.message);
-        toast.error("Registration failed: " + response.data.message);
       }
     } catch (error) {
       console.error("Registration failed:", error);
-      toast.error("Registration failed: " + (error.response?.data?.message || error.message));
+      toast.error(error.response?.data?.message || "Registration failed");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Show loading until auth state is fully determined
+  if (authLoading) {
+    return (
+     <Loader />
+    );
+  }
+
+  // Show verification form if needed
   if (showVerification) {
-    return <VerifyEmailForm />;
+    return (
+      <VerifyEmailForm 
+        onVerified={() => {
+          setShowVerification(false);
+          toast.success("Email verified successfully");
+          navigate("/");
+        }}
+        onCancel={() => {
+          setShowVerification(false);
+        }}
+      />
+    );
   }
 
   return (

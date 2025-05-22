@@ -1,6 +1,4 @@
-"use client"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Label } from "./ui/label"
 import { Input } from "./ui/input"
 import { cn } from "../lib/utils"
@@ -10,13 +8,14 @@ import axios from "axios"
 import toast from "react-hot-toast"
 import useAuthStore from "../store/authstore"
 import VerifyEmailForm from "./verify-email-form"
+import Loader from "./Loader"
 
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [showVerification, setShowVerification] = useState(false)
   axios.defaults.withCredentials = true
   const navigate = useNavigate()
-  const { setUser } = useAuthStore()
+  const { setUser, isLoggedIn, user , isLoading: authLoading } = useAuthStore()
 
   const {
     register,
@@ -28,6 +27,16 @@ export default function LoginForm() {
       password: "",
     },
   })
+
+  // Check if user is already logged in but not verified
+  useEffect(() => {
+    if (isLoggedIn && user && !user.verified) {
+      setShowVerification(true)
+      toast.error("Please verify your email to use the services", {
+        duration: 4000,
+      })
+    }
+  }, [ ])
 
   const onSubmit = async (data) => {
     setIsLoading(true)
@@ -61,7 +70,9 @@ export default function LoginForm() {
       setIsLoading(false)
     }
   }
-
+  if(authLoading) {
+    return <Loader />
+  }
   if (showVerification) {
     console.log("Rendering verification form")
     return (
@@ -71,10 +82,14 @@ export default function LoginForm() {
           toast.success("Email verified successfully")
           navigate("/")
         }}
+        onCancel={() => {
+          setShowVerification(false)
+        }}
       />
     )
   }
 
+  
   return (
     <div className="shadow-lg mx-auto w-full max-w-md rounded-lg bg-white dark:bg-zinc-900 p-6 border border-gray-200 dark:border-zinc-800">
       <h2 className="text-xl font-bold text-gray-900 dark:text-white">Welcome back to Earn Bug</h2>

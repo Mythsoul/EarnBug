@@ -4,7 +4,8 @@ const useAuthStore = create((set) => ({
   user: null,
   isLoggedIn: false,
   isLoading: false,
-  
+  showVerifyModal: false,
+
   setUser: (user) => set({
     user: { 
       id: user.id,
@@ -13,11 +14,13 @@ const useAuthStore = create((set) => ({
       verified: user.verified
     },
     isLoggedIn: true,
-    isLoading: false
+    isLoading: false, 
+    showVerifyModal: false
+
   }),
 
   setLoading: (isLoading) => set({ isLoading }),
-  
+  setShowVerifyModal: (show) => set({ showVerifyModal: show }),
   resetAuth: () => set({
     user: null,
     isLoggedIn: false,

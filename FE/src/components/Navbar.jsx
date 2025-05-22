@@ -7,11 +7,10 @@ import toast from "react-hot-toast"
 import VerifyEmailForm from "./verify-email-form"
 
 const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
-  const [showVerifyModal, setShowVerifyModal] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
-  const { user, isLoggedIn } = useAuthStore(); 
+  const { user, isLoggedIn, showVerifyModal, setShowVerifyModal } = useAuthStore();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -201,7 +200,6 @@ const Navbar = () => {
       )}
     </nav>
 
-    {/* Verification Modal */}
     {showVerifyModal && (
       <VerifyEmailForm 
         onVerified={() => {
