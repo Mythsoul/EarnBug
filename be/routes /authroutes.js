@@ -84,3 +84,4 @@ router.post("/api/auth/CheckAuthStatus", Authmiddleware , checkAuthstatus);
 router.post("/api/auth/resendVerificationEmail", Authmiddleware , resendVerificationCode);
 
 export const Authroutes = router;
+
