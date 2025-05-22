@@ -32,34 +32,36 @@ const ImageGeneration = () => {
 
     setIsGenerating(true);
     try {
-      const payload = {
-        prompt: prompt,
-        output_format: "webp",
-        style_preset: style,
-        width: parseInt(size.split('x')[0]),
-        height: parseInt(size.split('x')[1]),
-        steps: steps
-      };
+      const payload = new FormData();
+      payload.append('prompt', prompt);
+      payload.append('output_format', 'webp');
+      payload.append('style_preset', style);
+      payload.append('width', parseInt(size.split('x')[0]));
+      payload.append('height', parseInt(size.split('x')[1]));
+      payload.append('steps', steps);
 
       if (negativePrompt) {
-        payload.negative_prompt = negativePrompt;
+        payload.append('negative_prompt', negativePrompt);
       }
 
-      const response = await axios.postForm(
-        modelEndpoints[aimodel],
-        axios.toFormData(payload),
-        {
-          validateStatus: undefined,
-          responseType: 'arraybuffer',
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_STABILITY_API_KEY}`,
-            'Accept': 'image/*'
-          }
-        }
-      );
-if(response.status === 402){ 
-  toast.error("API quota exceeded. please try again or try choosing a diffrent model or wait a few months : > .");
-}
+      const response = await axios({
+        method: 'post',
+        url: modelEndpoints[aimodel],
+        data: payload,
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_STABILITY_API_KEY}`,
+          'Accept': 'image/*',
+          'Content-Type': 'multipart/form-data'
+        },
+        responseType: 'arraybuffer',
+        withCredentials: false 
+      });
+
+      if(response.status === 402){ 
+        toast.error("API quota exceeded. Please try again or try choosing a different model or wait a few months : > .");
+        return;
+      }
+
       if (response.status === 200) {
         const base64Image = btoa(
           new Uint8Array(response.data).reduce(
@@ -76,7 +78,7 @@ if(response.status === 402){
       }
     } catch(err) { 
       console.error("Error generating image:", err);
-      toast.error( "Failed to generate image");
+      toast.error(err.message || "Failed to generate image. Please try again.");
     } finally {
       setIsGenerating(false);
     }
