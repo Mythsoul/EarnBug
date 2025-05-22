@@ -21,7 +21,7 @@ export default function NotFound() {
   }, [countdown, navigate])
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-pink-50 to-purple-50 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-pink-50 to-purple-50 p-20">
       <div className="max-w-md w-full mx-auto text-center">
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}

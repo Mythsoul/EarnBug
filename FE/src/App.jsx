@@ -21,6 +21,7 @@ import { ForwardRoutes } from "./components/ForwardRoutes"
 import NotFound from "./pages/NotFound"
 import VerifyEmailForm from "./components/verify-email-form"
 import ForgotPasswordForm from "./components/ForgotPassword"
+import { PageContainer } from "./components/Layout"
 
 function App() {
   const { setUser, setLoading, showVerifyModal } = useAuthStore()
@@ -148,7 +149,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="*" element={<NotFound />} />
+            <Route path="*" element={  <NotFound /> } />
           </Routes>
 
           {/* Modal for email verification */}
