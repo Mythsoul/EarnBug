@@ -47,19 +47,18 @@ export const CreateUser = async (username, email, password) => {
         throw new Error("All fields are required");
        }
        try{ 
-        const salt = Number(process.env.Salt_Rounds) ; 
-        const hashedPassword = bcrypt.hashSync(password , salt);
-        // Validate email format
-
-        
-        const verified = false ; 
+        const salt = Number(process.env.Salt_Rounds); 
+        const hashedPassword = bcrypt.hashSync(password, salt);
+        const verified = false; 
         const verificationCode = generateVerificationCode();
+
         const response = await Database.query(
             "INSERT INTO users (username, email, password, verified, verification_code) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, email, verified",
             [username, email, hashedPassword, verified, verificationCode]
         );
 
-        // Send verification email
+        const newUser = response.rows[0];
+
         const emailText = `
 <!DOCTYPE html>
 <html>
@@ -120,7 +119,7 @@ export const CreateUser = async (username, email, password) => {
             <h1>Welcome to EarnBug</h1>
         </div>
         <div class="content">
-            <p>Dear ${user.username},</p>
+            <p>Dear ${username},</p>
             
             <p>Welcome to EarnBug! We're excited to have you on board.</p>
             
@@ -146,10 +145,12 @@ export const CreateUser = async (username, email, password) => {
 
 
         await sendEmail(email, "Verify Your EarnBug Account", emailText);
-
-        return response.rows[0]; 
+        return newUser;
        
-    }catch(err){ 
+    } catch(err){ 
+        if (err.code === '23505') { // PostgreSQL unique violation
+            throw new Error("Email already exists");
+        }
         throw new Error(`User creation failed: ${err.message}`); 
     }
 }
