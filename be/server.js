@@ -14,7 +14,9 @@ const port = 3000;
 dotenv.config(); 
 
 const isProduction = process.env.NODE_ENV === "production";
-console.log("isProduction", isProduction); 
+const allowedOrigins = isProduction 
+  ? ['https://earn-bug-fe.vercel.app']
+  : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173', 'http://127.0.0.1:5173'];
 
 const getCookieConfig = () => {
   return {
@@ -31,14 +33,32 @@ app.use(express.static("public"))
 
 
 // Updated CORS configuration - dynamic in development, restricted in production
-app.use(cors({ 
-    origin: isProduction 
-        ? [process.env.FRONTEND_URL] 
-        : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173', 'http://127.0.0.1:5173'],
-    credentials: true, 
-    methods: ["GET", "POST", "PUT", "DELETE"], 
-    allowedHeaders: ["Content-Type", "Authorization"],
-}))
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Cookie');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
+app.use(cors({
+  origin: function(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'Cookie']
+}));
 
 const pgSession = connectPgSimple(session); 
 
