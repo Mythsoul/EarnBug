@@ -30,24 +30,27 @@ export const setupPassport = () => {
   passport.use(new GitHubStrategy({
     clientID: process.env.GITHUB_CLIENT_ID,
     clientSecret: process.env.GITHUB_CLIENT_SECRET,
-    callbackURL: "/api/auth/github/callback",
-    scope: ['user', 'user:email']  // Add email scope
+    callbackURL: `${process.env.BE_URL}/api/auth/github/callback`,
+    scope: ['user', 'user:email']
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
-
+      const email = profile.emails?.[0]?.value;
       
-      // Try to get email from profile, fallback to generated email
-      const email = profile.emails?.[0]?.value || `${profile.username}@github.com`;
-      const username = profile.displayName || profile.username;
+      if (!email) {
+        return done(new Error('No email found in GitHub profile'));
+      }
 
-      let user = await FindUserByEmail(email);
+      const username = profile.displayName || profile.username;
+      
+      let user = await FindUserByEmail(email); 
       
       if (!user) {
         user = await CreateUser(
           username,
           email,
-          profile.id
+          profile.id,
+          true
         );
       } else {
         user = await Login(email, profile.id);
@@ -79,7 +82,8 @@ export const setupPassport = () => {
         user = await CreateUser(
           profile.displayName,
           email,
-          profile.id // Using profile.id as password for OAuth users
+          profile.id ,
+          true
         );
       } else {
         // User exists, try to login

@@ -7,7 +7,7 @@ import session from "express-session";
 import cookieParser from "cookie-parser";
 import passport from "passport";
 import { Authroutes } from "./routes /authroutes.js";
-
+import { setupPassport } from "./config/passport/passport.js";
 dotenv.config(); 
 
 const app = express();
@@ -76,7 +76,7 @@ app.use(session({
 }));
 
 // Passport initialization
-
+setupPassport();
 app.use(passport.initialize());
 app.use(passport.session());
 

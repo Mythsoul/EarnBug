@@ -13,13 +13,18 @@ export async function FindUserByEmail(email){
    }
    try { 
     const response = await Database.query("select * from users where email = $1" , [email]);    
-    delete response.rows[0].password ; 
+    
+    // Check if user exists
+    if (!response.rows[0]) {
+      return null;
+    }
 
+    // Only delete password if user exists
+    delete response.rows[0].password;
     return response.rows[0];
    } catch (error) { 
-    throw new Error(error); 
+    throw new Error(error.message || 'Database error'); 
    }
-
 }
 
 export const JwtGenerator = (user) => {
@@ -42,15 +47,15 @@ const generateVerificationCode = () => {
     return number.toString();
 };
 
-export const CreateUser = async (username, email, password) => {
+export const CreateUser = async (username, email, password , verified = false) => {
        if(!password || !email || !username) {
         throw new Error("All fields are required");
        }
        try{ 
         const salt = Number(process.env.Salt_Rounds); 
         const hashedPassword = bcrypt.hashSync(password, salt);
-        const verified = false; 
-        const verificationCode = generateVerificationCode();
+         
+        const verificationCode = verified ? null : generateVerificationCode();
 
         const response = await Database.query(
             "INSERT INTO users (username, email, password, verified, verification_code) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, email, verified",
@@ -144,11 +149,11 @@ export const CreateUser = async (username, email, password) => {
 `;
 
 
-        await sendEmail(email, "Verify Your EarnBug Account", emailText);
+        await verified ? null : sendEmail(email, "Verify Your EarnBug Account", emailText);
         return newUser;
        
     } catch(err){ 
-        if (err.code === '23505') { // PostgreSQL unique violation
+        if (err.code === '23505') { // Unique violation error code
             throw new Error("Email already exists");
         }
         throw new Error(`User creation failed: ${err.message}`); 

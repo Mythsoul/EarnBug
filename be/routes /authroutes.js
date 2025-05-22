@@ -3,6 +3,8 @@ import passport from 'passport';
 import { checkAuthstatus, LoginUser, logout, RegisterUser, resendVerificationCode, verifyemail } from "../controllers/Authcontroller.js"
 import { Authmiddleware, preventAuthenticatedAccess, preventlogout } from "../middlewares/Authmiddleware.js";
 import { JwtGenerator} from "../models/authmodel.js";
+import dotenv from "dotenv";
+dotenv.config();
 const router = express.Router();
 
 router.post("/api/auth/register" ,preventAuthenticatedAccess ,  RegisterUser);  
@@ -13,10 +15,11 @@ router.post("/api/auth/logout" , preventlogout , logout);
 router.get('/api/auth/github',
   preventAuthenticatedAccess,
   passport.authenticate('github', { scope: ['user:email'] })
+
 );
 
 router.get('/api/auth/github/callback',
-  passport.authenticate('github', { failureRedirect: '/login' }),
+  passport.authenticate('github', { failureRedirect: '/login'}),
   (req, res) => {
     const token = JwtGenerator(req.user);
     req.session.user = req.user;
@@ -24,11 +27,11 @@ router.get('/api/auth/github/callback',
     res.cookie("token", token, {
       httpOnly: true,
       maxAge: 60 * 60 * 1000,
-      sameSite: "none",
+      sameSite: process.env.NODE_ENV === "production" ? 'none' : 'lax',
       secure: process.env.NODE_ENV === "production"
     });
     
-    res.redirect(process.env.FE_URL);
+  res.redirect(process.env.FRONTEND_ORIGIN);
   }
 );
 
@@ -47,11 +50,11 @@ router.get('/api/auth/google/callback',
     res.cookie("token", token, {
       httpOnly: true,
       maxAge: 60 * 60 * 1000,
-      sameSite: "none",
+      sameSite: process.env.NODE_ENV === "production" ? 'none' : 'lax', 
       secure: process.env.NODE_ENV === "production"
     });
     
-    res.redirect(process.env.FE_URL);
+    res.redirect(process.env.FRONTEND_ORIGIN);
   }
 );
 
