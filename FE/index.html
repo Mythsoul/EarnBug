@@ -2,14 +2,22 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/png" href="/icons/profile.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#9333EA" />
+    <meta name="description" content="AI-powered creative suite for image generation, voice conversion, and more" />
+    <link rel="apple-touch-icon" href="/icons/profile.png">
+    <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="/src/index.css">
-    
-    <title>Earn Bug</title>
+    <title>EarnBug</title>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
+    </script>
   </body>
 </html>

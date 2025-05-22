@@ -1,0 +1,17 @@
+{
+    "name": "EarnBug",
+    "short_name": "EarnBug",
+    "description": "AI-powered creative suite for image generation, voice conversion, and more",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#18181B",
+    "theme_color": "#9333EA",
+    "orientation": "portrait-primary",
+    "icons": [
+      {
+        "src": "/icons/profile.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      }
+    ]
+  }
