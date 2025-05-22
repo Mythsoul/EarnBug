@@ -4,11 +4,12 @@ import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useAuthStore from "../store/authstore";
 
 export default function VerifyEmailForm({ onVerified, onClose }) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const navigate = useNavigate();
   const { user, setUser } = useAuthStore();
 
@@ -18,6 +19,7 @@ export default function VerifyEmailForm({ onVerified, onClose }) {
       code: "",
     },
   });
+  axios.defaults.withCredentials = true;
 
   const onSubmit = async (data) => {
     setIsLoading(true);
@@ -49,7 +51,35 @@ export default function VerifyEmailForm({ onVerified, onClose }) {
       document.body.style.overflow = 'unset';
     };
   }, []);
+  const resendVerificationEmail = async () => {
+    try {
+      setIsSending(true);
+      const response = await axios.post(
+        `${import.meta.env.VITE_BE_URL}/api/auth/resendVerificationEmail`,
+        {},
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
 
+      if (response.data.success) {
+        toast.success("Verification code sent to your email");
+      } else {
+        throw new Error(response.data.message);
+      }
+    } catch (error) {
+      console.error('Resend error:', error);
+      toast.error(error.response?.data?.message || "Failed to resend verification code");
+    } finally {
+      setIsLoading(false);
+    }
+};
+
+  
+  
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Blur overlay */}
@@ -88,6 +118,14 @@ export default function VerifyEmailForm({ onVerified, onClose }) {
               />
               {errors.code && <p className="text-sm text-red-500 mt-1">{errors.code.message}</p>}
             </div>
+            <button
+              type="button"
+              onClick={resendVerificationEmail}
+              className="text-sm text-gray-600 dark:text-gray-400 hover:underline"
+              disabled={isLoading || isSending}
+            >
+              {isSending ? "Sending..." : "Click here to Send Verification Code Again"}
+            </button>
 
             <button
               className="mt-6 w-full h-10 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-70 transition-colors"
