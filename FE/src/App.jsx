@@ -16,6 +16,7 @@ import Navbar from "@/components/Navbar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ForwardRoutes } from "./components/ForwardRoutes";
+import NotFound from "./pages/NotFound";
 
 function App() {
   const { setUser, setLoading } = useAuthStore();
@@ -36,7 +37,7 @@ axios.defaults.withCredentials = true;
           setUser(response.data.user);
         }
       } catch (error) {
-        console.error("Session check failed:", error);
+      console.log("User not logged in");
       } finally {
         setLoading(false);
       }
@@ -94,6 +95,7 @@ axios.defaults.withCredentials = true;
               <ChatBot />
             </ProtectedRoute>
           } />
+          <Route path="*" element={<NotFound />} />
         </Routes>
           </main>
         </div>  
