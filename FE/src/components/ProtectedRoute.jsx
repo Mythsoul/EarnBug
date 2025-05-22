@@ -12,6 +12,9 @@ export const ProtectedRoute = ({children}) => {
     useEffect(() => {
         if (!isLoading) {
             if (!isLoggedIn) {
+                toast.error("Please log in to access this page", {
+                    duration: 3000,
+                });
                 navigate("/login");
             } else if ( !user?.verified) {
                 toast.error("Please verify your email to use the services", {

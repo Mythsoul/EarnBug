@@ -1,9 +1,11 @@
-import SignupForm from "../components/signup-form";
-
+import SignupForm from "../components/signup-form"
+import { PageContainer } from "@/components/Layout"
 export default function Signup() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-black p-4">
-      <SignupForm />
-    </main>
-  );
+    <PageContainer className="flex items-center justify-center min-h-screen">
+      <div className="w-full max-w-md">
+        <SignupForm />
+      </div>
+    </PageContainer>
+  )
 }

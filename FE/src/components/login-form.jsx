@@ -70,6 +70,13 @@ export default function LoginForm() {
       setIsLoading(false)
     }
   }
+  const handleGitHubAuth = () => {
+    window.location.href = `${import.meta.env.VITE_BE_URL}/api/auth/github`;
+  };
+
+  const handleGoogleAuth = () => {
+    window.location.href = `${import.meta.env.VITE_BE_URL}/api/auth/google`;
+  };
   if(authLoading) {
     return <Loader />
   }
@@ -177,6 +184,7 @@ export default function LoginForm() {
           <button
             className="group relative flex h-10 w-full items-center justify-center space-x-2 rounded-md bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
             type="button"
+            onClick={handleGitHubAuth}
           >
             <GitHubIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             <span className="text-sm text-gray-700 dark:text-gray-300">Continue with GitHub</span>
@@ -185,6 +193,7 @@ export default function LoginForm() {
           <button
             className="group relative flex h-10 w-full items-center justify-center space-x-2 rounded-md bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
             type="button"
+            onClick={handleGoogleAuth}
           >
             <GoogleIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             <span className="text-sm text-gray-700 dark:text-gray-300">Continue with Google</span>

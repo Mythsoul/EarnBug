@@ -1,9 +1,11 @@
-import LoginForm from "../components/login-form";
-
+import LoginForm from "../components/login-form"
+import { PageContainer } from "@/components/Layout"
 export default function Login() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-black p-4">
-      <LoginForm />
-    </main>
-  );
+    <PageContainer className="flex items-center justify-center min-h-screen">
+      <div className="w-full max-w-md">
+        <LoginForm />
+      </div>
+    </PageContainer>
+  )
 }

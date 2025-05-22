@@ -99,6 +99,14 @@ export default function SignupForm() {
     );
   }
 
+  const handleGitHubAuth = () => {
+    window.location.href = `${import.meta.env.VITE_BE_URL}/api/auth/github`;
+  };
+
+  const handleGoogleAuth = () => {
+    window.location.href = `${import.meta.env.VITE_BE_URL}/api/auth/google`;
+  };
+
   return (
     <div className="shadow-lg mx-auto w-full max-w-md rounded-lg bg-white dark:bg-zinc-900 p-6 border border-gray-200 dark:border-zinc-800">
       <h2 className="text-xl font-bold text-gray-900 dark:text-white">Welcome to Earn Bug</h2>
@@ -225,6 +233,8 @@ export default function SignupForm() {
           <button
             className="group relative flex h-10 w-full items-center justify-center space-x-2 rounded-md bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
             type="button"
+            onClick={handleGitHubAuth}
+            disabled={isLoading}
           >
             <GitHubIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             <span className="text-sm text-gray-700 dark:text-gray-300">Continue with GitHub</span>
@@ -233,6 +243,8 @@ export default function SignupForm() {
           <button
             className="group relative flex h-10 w-full items-center justify-center space-x-2 rounded-md bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
             type="button"
+            onClick={handleGoogleAuth}
+            disabled={isLoading}
           >
             <GoogleIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             <span className="text-sm text-gray-700 dark:text-gray-300">Continue with Google</span>

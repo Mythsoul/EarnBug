@@ -69,17 +69,7 @@ const HomePage = () => {
                 Transform your ideas into reality with our suite of AI-powered tools for image generation, voice
                 conversion, and intelligent conversations.
               </p>
-              <div className="mt-10 flex justify-center gap-4">
-                <Button
-                  size="lg"
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                >
-                  Get Started
-                </Button>
-                <Button size="lg" variant="outline">
-                  Learn More
-                </Button>
-              </div>
+      
             </div>
           </div>
         </div>
@@ -142,9 +132,10 @@ const HomePage = () => {
                 ))}
               </div>
               <div className="mt-10">
-                <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+                <Link to="/image-generation"><Button   className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
                   Start Creating Now
                 </Button>
+                </Link>
               </div>
             </div>
             <div className="mt-12 lg:mt-0 flex justify-center">
@@ -168,22 +159,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 md:py-24 bg-gradient-to-r from-purple-600 to-pink-600">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
-            Ready to transform your ideas into reality?
-          </h2>
-          <p className="mt-4 max-w-2xl mx-auto text-xl text-purple-100">
-            Join thousands of users already creating amazing content with EarnBug.
-          </p>
-          <div className="mt-10">
-            <Button size="lg" className="bg-white text-purple-600 hover:bg-gray-100">
-              Get Started for Free
-            </Button>
-          </div>
-        </div>
-      </section>
+    
 
       <style jsx>{`
         @keyframes blob {
