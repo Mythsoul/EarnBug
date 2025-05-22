@@ -11,11 +11,14 @@ const sendEmail = async (to, subject, text) => {
         });
 
         const mailOptions = {
-            from: process.env.GMAIL_USER,
+            from: { 
+                name: 'EarnBug Team',
+                address: process.env.GMAIL_USER 
+            },
             to,
             subject,
-                html: text, // Changed from text to html
-            contentType: 'text/html' // Added content type
+                html: text, 
+            contentType: 'text/html' 
         };
 
         const info = await transporter.sendMail(mailOptions);
