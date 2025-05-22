@@ -16,44 +16,47 @@ const port = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
-// Enable trust proxy for secure cookies in production
 app.set('trust proxy', 1);
+
+const corsOptions = {
+    origin: function (origin, callback) {
+        if (!origin) return callback(null, false);
+        
+        const allowedOrigins = isProduction 
+            ? ['https://earn-bug-fe.vercel.app' , 'http://localhost:5173']
+            : ['http://localhost:5173', 'http://127.0.0.1:5173'];
+        
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: [
+        'Content-Type', 
+        'Authorization', 
+        'Cookie',
+        'X-Requested-With',
+        'Accept',
+        'Origin'
+    ],
+    exposedHeaders: ['Set-Cookie'],
+    optionsSuccessStatus: 200, 
+    preflightContinue: false
+};
+
+app.use(cors(corsOptions));
+
+// Handle preflight requests explicitly
+app.options('*', cors(corsOptions));
 
 // Basic middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static("public"));
-
-// CORS configuration
-app.use(cors({
-    origin: isProduction 
-        ? ['https://earn-bug-fe.vercel.app']
-        : ['http://localhost:5173'],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
-    exposedHeaders: ['Set-Cookie']
-}));
-
-// Additional CORS headers
-app.use((req, res, next) => {
-    res.set({
-        'Access-Control-Allow-Credentials': 'true',
-        'Access-Control-Allow-Origin': isProduction 
-            ? 'https://earn-bug-fe.vercel.app'
-            : 'http://localhost:5173'
-    });
-    next();
-});
-
-// Handle OPTIONS requests
-app.use((req, res, next) => {
-    if (req.method === 'OPTIONS') {
-        return res.status(204).end();
-    }
-    next();
-});
 
 // Session configuration
 const pgSession = connectPgSimple(session);
@@ -74,29 +77,46 @@ app.use(session({
         httpOnly: true,
         sameSite: isProduction ? 'none' : 'lax',
         maxAge: 24 * 60 * 60 * 1000,
-        path: '/'
+        path: '/',
+     
     }
 }));
 
-// Passport initialization
 app.use(passport.initialize());
 app.use(passport.session());
 setupPassport(app);
 
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.path} - Origin: ${req.get('origin')}`);
+    next();
+});
+
 // Routes
+app.get("/", (req, res) => {
+    res.json({ 
+        message: "Server is running",
+        environment: process.env.NODE_ENV || 'development',
+        timestamp: new Date().toISOString()
+    });
+});
+
 app.use(Authroutes);
 
-// Basic error handler
+// Error handling middleware
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({
-        success: false,
-        message: 'Internal Server Error'
-    });
+    console.error('Error:', err);
+    if (err.message === 'Not allowed by CORS') {
+        return res.status(403).json({ 
+            error: 'CORS policy violation',
+            origin: req.get('origin')
+        });
+    }
+    res.status(500).json({ error: 'Internal server error' });
 });
 
 app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`Frontend URL: ${FRONTEND_URL}`);
+    console.log(`Allowed origins: ${isProduction ? 'https://earn-bug-fe.vercel.app' : 'http://localhost:5173'}`);
 });
