@@ -9,10 +9,12 @@ import toast from "react-hot-toast"
 import useAuthStore from "../store/authstore"
 import VerifyEmailForm from "./verify-email-form"
 import Loader from "./Loader"
+import ForgotPasswordForm from "./ForgotPassword"
 
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [showVerification, setShowVerification] = useState(false)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
   axios.defaults.withCredentials = true
   const navigate = useNavigate()
   const { setUser, isLoggedIn, user , isLoading: authLoading } = useAuthStore()
@@ -96,6 +98,14 @@ export default function LoginForm() {
     )
   }
 
+  if(showForgotPassword) {
+    return (
+      <ForgotPasswordForm 
+        onClose={() => setShowForgotPassword(false)}
+      />
+    )
+  }
+
   
   return (
     <div className="shadow-lg mx-auto w-full max-w-md rounded-lg bg-white dark:bg-zinc-900 p-6 border border-gray-200 dark:border-zinc-800">
@@ -130,9 +140,13 @@ export default function LoginForm() {
             <Label htmlFor="password" className="text-gray-900 dark:text-white">
               Password
             </Label>
-            <Link to="/forgot-password" className="text-xs text-blue-500 hover:underline">
+            <button 
+              type="button"
+              onClick={() => setShowForgotPassword(true)}
+              className="text-xs text-blue-500 hover:underline"
+            >
               Forgot password?
-            </Link>
+            </button>
           </div>
           <Input
             id="password"

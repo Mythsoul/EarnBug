@@ -20,6 +20,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute"
 import { ForwardRoutes } from "./components/ForwardRoutes"
 import NotFound from "./pages/NotFound"
 import VerifyEmailForm from "./components/verify-email-form"
+import ForgotPasswordForm from "./components/ForgotPassword"
 
 function App() {
   const { setUser, setLoading, showVerifyModal } = useAuthStore()
@@ -122,6 +123,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/text-to-voice"
               element={
@@ -165,3 +167,4 @@ function App() {
 
 
 export default App
+
