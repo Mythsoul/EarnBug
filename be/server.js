@@ -9,91 +9,94 @@ import { setupPassport } from './config/passport/passport.js';
 import passport from "passport";
 import dotenv from "dotenv";
 
-const app = express(); 
-const port = 3000; 
-dotenv.config(); 
+dotenv.config();
 
-const isProduction = process.env.NODE_ENV === "production";
-const allowedOrigins = isProduction 
-  ? ['https://earn-bug-fe.vercel.app']
-  : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173', 'http://127.0.0.1:5173'];
+const app = express();
+const port = process.env.PORT || 3000;
+const isProduction = process.env.NODE_ENV === 'production';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
-const getCookieConfig = () => {
-  return {
-    httpOnly: true,
-    secure: isProduction, // true in production, false in development
-    sameSite: isProduction ? 'none' : 'lax', // 'none' in production (requires secure:true), 'lax' in development
-    path: '/'
-  };
-};
-app.use(cookieParser())
-app.use(express.json()) 
-app.use(express.urlencoded({ extended: true })) 
-app.use(express.static("public")) 
+// Enable trust proxy for secure cookies in production
+app.set('trust proxy', 1);
 
+// Basic middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(express.static("public"));
 
-// Updated CORS configuration - dynamic in development, restricted in production
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Cookie');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
-
+// CORS configuration
 app.use(cors({
-  origin: function(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'Cookie']
+    origin: isProduction 
+        ? ['https://earn-bug-fe.vercel.app']
+        : ['http://localhost:5173'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    exposedHeaders: ['Set-Cookie']
 }));
 
-const pgSession = connectPgSimple(session); 
+// Additional CORS headers
+app.use((req, res, next) => {
+    res.set({
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Origin': isProduction 
+            ? 'https://earn-bug-fe.vercel.app'
+            : 'http://localhost:5173'
+    });
+    next();
+});
 
-app.use(session({
-    store: new pgSession({ 
-        pool: Database, 
-        tableName: "session",  
-        createTableIfMissing: true 
-    }), 
-    name: "sessionId",
-    secret: process.env.SESSION_SECRET, 
-    resave: false, 
-    saveUninitialized: false,
-   proxy: true,
-    cookie: {  
-        maxAge: 1000 * 60 * 60 * 24 * 1, 
-        ...getCookieConfig() 
+// Handle OPTIONS requests
+app.use((req, res, next) => {
+    if (req.method === 'OPTIONS') {
+        return res.status(204).end();
     }
-}))
+    next();
+});
 
-app.use(passport.initialize())
-app.use(passport.session())
+// Session configuration
+const pgSession = connectPgSimple(session);
+app.use(session({
+    store: new pgSession({
+        pool: Database,
+        tableName: 'session',
+        createTableIfMissing: true,
+        ttl: 24 * 60 * 60
+    }),
+    name: 'sessionId',
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    proxy: true,
+    cookie: {
+        secure: isProduction,
+        httpOnly: true,
+        sameSite: isProduction ? 'none' : 'lax',
+        maxAge: 24 * 60 * 60 * 1000,
+        path: '/'
+    }
+}));
 
+// Passport initialization
+app.use(passport.initialize());
+app.use(passport.session());
 setupPassport(app);
 
-app.get("/", (req, res) => {
-    res.send("Hello World")
-})
-
-app.get("/api/ping", (req, res) => {
-    res.send("pong") 
-})
-
+// Routes
 app.use(Authroutes);
 
-app.listen(port, () => { 
-    console.log("The server is running at port", port)
+// Basic error handler
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({
+        success: false,
+        message: 'Internal Server Error'
+    });
+});
+
+app.listen(port, () => {
+    console.log(`Server running on http://localhost:${port}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`Frontend URL: ${FRONTEND_URL}`);
 });
