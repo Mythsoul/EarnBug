@@ -7,7 +7,7 @@ dotenv.config();
 
 export const Database = new pg.Pool({
     connectionString : process.env.DATABASE_URL , 
-    connectionTimeoutMillis : 5000, // Timeout after 5 seconds
+    connectionTimeoutMillis : 10000, // Timeout after 10 seconds
     ssl : {
         rejectUnauthorized : false
     } 

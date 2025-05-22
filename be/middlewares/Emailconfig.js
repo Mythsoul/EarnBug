@@ -14,7 +14,8 @@ const sendEmail = async (to, subject, text) => {
             from: process.env.GMAIL_USER,
             to,
             subject,
-            text,
+                html: text, // Changed from text to html
+            contentType: 'text/html' // Added content type
         };
 
         const info = await transporter.sendMail(mailOptions);

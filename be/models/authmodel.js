@@ -60,7 +60,91 @@ export const CreateUser = async (username, email, password) => {
         );
 
         // Send verification email
-        const emailText = `Welcome to EarnBug!\nYour verification code is: ${verificationCode}\nPlease verify your account to continue.`;
+        const emailText = `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333333;
+        }
+        .header {
+            background: linear-gradient(to right, #9333EA, #DB2777);
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            color: white;
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        .verification-code {
+            background-color: #f3f4f6;
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 4px;
+            margin: 20px 0;
+            color: #9333EA;
+            border-radius: 8px;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #666666;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(to right, #9333EA, #DB2777);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>Welcome to EarnBug</h1>
+        </div>
+        <div class="content">
+            <p>Dear ${user.username},</p>
+            
+            <p>Welcome to EarnBug! We're excited to have you on board.</p>
+            
+            <p>To complete your registration, please use the verification code below:</p>
+            
+            <div class="verification-code">
+                ${verificationCode}
+            </div>
+            
+            <p>Kindly verify your account to unlock all the features we offer.</p>
+            
+            <p>If you have any questions or need assistance, feel free to reach out to our support team.</p>
+            
+            <p>Best regards,<br>The EarnBug Team</p>
+        </div>
+        <div class="footer">
+            <p>This is an automated message, please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>
+`;
+
+
         await sendEmail(email, "Verify Your EarnBug Account", emailText);
 
         return response.rows[0]; 
@@ -157,5 +241,117 @@ export const verifyUser = async (email, code) => {
         // Handle error without trying to stringify circular structures
         const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
         throw new Error(`Verification failed: ${errorMessage}`);
+    }
+}
+
+export const resendVerificationEmail = async (email) => {
+    try {
+        const user = await FindUserByEmail(email);
+
+        if (!user) {
+            throw new Error("User not found");
+        }
+
+        if (user.verified) {
+            return { success: false, message: "User already verified" };
+        }
+
+        const verificationCode = generateVerificationCode();
+        await Database.query(
+            "UPDATE users SET verification_code = $1 WHERE email = $2",
+            [verificationCode, email]
+        );
+
+      
+const emailText = `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333333;
+        }
+        .header {
+            background: linear-gradient(to right, #9333EA, #DB2777);
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            color: white;
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        .verification-code {
+            background-color: #f3f4f6;
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 4px;
+            margin: 20px 0;
+            color: #9333EA;
+            border-radius: 8px;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #666666;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(to right, #9333EA, #DB2777);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>Welcome to EarnBug</h1>
+        </div>
+        <div class="content">
+            <p>Dear ${user.username},</p>
+            
+            <p>Welcome to EarnBug! We're excited to have you on board.</p>
+            
+            <p>To complete your registration, please use the verification code below:</p>
+            
+            <div class="verification-code">
+                ${verificationCode}
+            </div>
+            
+            <p>Kindly verify your account to unlock all the features we offer.</p>
+            
+            <p>If you have any questions or need assistance, feel free to reach out to our support team.</p>
+            
+            <p>Best regards,<br>The EarnBug Team</p>
+        </div>
+        <div class="footer">
+            <p>This is an automated message, please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>
+`;
+
+
+        await sendEmail(email, "Verify Your EarnBug Account", emailText);
+
+        return { success: true, message: "Verification email resent successfully" };
+    } catch (error) {
+        throw new Error(error.message);
     }
 }

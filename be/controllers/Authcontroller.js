@@ -1,4 +1,4 @@
-import { CreateUser, JwtGenerator, Login, verifyUser } from "../models/authmodel.js";
+import { CreateUser, JwtGenerator, Login, resendVerificationEmail, verifyUser } from "../models/authmodel.js";
 import dotenv from "dotenv" 
 dotenv.config(); 
 
@@ -156,6 +156,62 @@ export const verifyemail = async (req, res) => {
         res.status(400).json({
             success: false,
             message: error.message
+        });
+    }
+};
+
+export const checkAuthstatus = async (req , res) => { 
+    try {
+        if(!req.session.user) {
+            return res.status(401).json({
+                success: false,
+                message: "User not logged in"
+            });
+        }
+        const user = req.session.user;
+        res.status(200).json({
+            success: true,
+            message: "User is logged in",
+            user
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
+export const resendVerificationCode = async (req, res) => {
+    try {
+        if (!req.session.user || !req.session.user.email) {
+            return res.status(401).json({
+                success: false,
+                message: "User not found or not authenticated"
+            });
+        }
+
+        const email = req.session.user.email;
+        
+        
+        const result = await resendVerificationEmail(email);
+        
+        if (!result.success) {
+            return res.status(400).json({
+                success: false,
+                message: result.message || "Failed to resend verification code"
+            });
+        }
+        
+        res.status(200).json({
+            success: true,
+            message: "Verification code sent successfully"
+        });
+    } catch (error) {
+        console.error('Resend verification error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to resend verification code"
         });
     }
 };
