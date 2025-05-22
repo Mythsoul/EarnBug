@@ -39,7 +39,7 @@ export function ThemeProvider({ children, defaultTheme = "light", storageKey = "
   if (!isReady || authLoading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <Loader />
+        <Loader variant="cat" />
       </div>
     )
   }

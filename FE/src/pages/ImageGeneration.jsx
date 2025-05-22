@@ -54,7 +54,7 @@ const ImageGeneration = () => {
           'Content-Type': 'multipart/form-data'
         },
         responseType: 'arraybuffer',
-        withCredentials: false 
+        withCredentials: false  
       });
 
       if(response.status === 402){ 
