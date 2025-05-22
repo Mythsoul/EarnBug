@@ -1,6 +1,6 @@
 import express from "express"   
 import passport from 'passport';
-import { checkAuthstatus, LoginUser, logout, RegisterUser, resendVerificationCode, verifyemail } from "../controllers/Authcontroller.js"
+import { checkAuthstatus, LoginUser, logout, passwordReset, RegisterUser, resendVerificationCode, sendPasswordResetCode, verifyemail } from "../controllers/Authcontroller.js"
 import { Authmiddleware, preventAuthenticatedAccess, preventlogout } from "../middlewares/Authmiddleware.js";
 import { JwtGenerator} from "../models/authmodel.js";
 import dotenv from "dotenv";
@@ -85,6 +85,7 @@ router.get("/api/auth/verify", Authmiddleware, async (req, res) => {
 router.post("/api/auth/verify-email", verifyemail);
 router.post("/api/auth/CheckAuthStatus", Authmiddleware , checkAuthstatus);
 router.post("/api/auth/resendVerificationEmail", Authmiddleware , resendVerificationCode);
-
+router.post("/api/auth/sendResetPasswordEmail", preventAuthenticatedAccess , sendPasswordResetCode);
+router.post("/api/auth/resetPassword" , preventAuthenticatedAccess , passwordReset);
 export const Authroutes = router;
 

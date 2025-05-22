@@ -1,4 +1,4 @@
-import { CreateUser, JwtGenerator, Login, resendVerificationEmail, verifyUser } from "../models/authmodel.js";
+import { CreateUser, forgotPassword, JwtGenerator, Login, resendVerificationEmail, resetPassword, verifyResetToken, verifyUser } from "../models/authmodel.js";
 import dotenv from "dotenv" 
 dotenv.config(); 
 
@@ -215,3 +215,69 @@ export const resendVerificationCode = async (req, res) => {
         });
     }
 };
+
+export const sendPasswordResetCode = async (req, res) => {  
+    try{ 
+        const {email} = req.body;
+        if(!email) { 
+            return res.status(400).json({
+                success: false,
+                message: "Email is required"
+            });
+        }
+        const result = await forgotPassword(email);
+        if(!result.success) { 
+            return res.status(400).json({
+                success: false,
+                message: result.message
+            });
+        }
+        res.status(200).json({
+            success: true,
+            message: "Password reset code sent to your email"
+        });
+    } catch(err){ 
+        res.status(400).json({
+            success: false,
+            message: err.message
+        });
+
+    }
+} 
+
+
+export const passwordReset = async (req, res) => {
+    try {
+        const { email, code, newPassword } = req.body;
+        if (!email || !code || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "All fields are required"
+            });
+        }
+        const iscodeValid = await verifyResetToken(email , code); 
+        if (!iscodeValid) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid or expired code"
+            });
+        }
+        const result = await resetPassword(email , newPassword);
+        
+        if (!result.success) {
+            return res.status(400).json({
+                success: false,
+                message: result.message
+            });
+        }
+        res.status(200).json({
+            success: true,
+            message: "Password reset successfully"
+        });
+    } catch (err) {
+        res.status(400).json({
+            success: false,
+            message: err.message
+        });
+    }
+} 

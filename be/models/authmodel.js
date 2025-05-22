@@ -361,3 +361,146 @@ const emailText = `
         throw new Error(error.message);
     }
 }
+
+export const forgotPassword = async (email) => { 
+    try {
+        const user = await FindUserByEmail(email);
+
+        if (!user) {
+            throw new Error("User not found");
+        }
+
+        const resetToken = generateVerificationCode();
+        await Database.query(
+            "UPDATE users SET reset_token = $1, reset_token_expiry = $2 WHERE email = $3",
+            [resetToken, Date.now() + 3600000, email]
+        );
+
+        const emailText = `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333333;
+        }
+        .header {
+            background: linear-gradient(to right, #9333EA, #DB2777);
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            color: white;
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        .reset-code {
+            background-color: #f3f4f6;
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 4px;
+            margin: 20px 0;
+            color: #9333EA;
+            border-radius: 8px;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #666666;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(to right, #9333EA, #DB2777);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>Reset Your Password</h1>
+        </div>  
+        <div class="content">
+            <p>Dear ${user.username},</p>
+            
+            <p>We received a request to reset your password. Please use the code below to reset your password:</p>
+            
+            <div class="reset-code">
+                ${resetToken}
+            </div>
+            <p>This code is valid for 1 hour. If you did not request a password reset, please ignore this email.</p>
+            <p>If you have any questions or need assistance, feel free to reach out to our support team.</p>
+            <p>Best regards,<br>The EarnBug Team</p>
+        </div>
+        <div class="footer">
+            <p>This is an automated message, please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>
+`;
+        await sendEmail(email, "Reset Your EarnBug Password", emailText);
+        return { success: true, message: "Password reset email sent successfully" };
+    }
+    catch (error) {
+        throw new Error(error.message);
+    }
+}
+
+
+export const verifyResetToken = async (email, token) => { 
+    try {
+        const user = await FindUserByEmail(email);
+
+        if (!user) {
+            throw new Error("User not found");
+        }
+
+        if (user.reset_token !== token) {
+            throw new Error("Invalid reset token");
+        }
+        if (Date.now() > user.reset_token_expiry) {
+            throw new Error("Reset token has expired");
+        }
+        return { success: true, message: "Reset token is valid" };
+    } catch (error) {
+        throw new Error(error.message);
+    }
+}
+
+export const resetPassword = async (email, newPassword) => { 
+    try {
+        const user = await FindUserByEmail(email);
+
+        if (!user) {
+            throw new Error("User not found");
+        }
+
+        const salt = Number(process.env.Salt_Rounds); 
+        const hashedPassword = bcrypt.hashSync(newPassword, salt);
+
+        await Database.query(
+            "UPDATE users SET password = $1, reset_token = null, reset_token_expiry = null WHERE email = $2",
+            [hashedPassword, email]
+        );
+
+        return { success: true, message: "Password reset successfully" };
+    } catch (error) {
+        throw new Error(error.message);
+    }
+} 
