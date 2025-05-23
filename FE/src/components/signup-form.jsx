@@ -1,20 +1,30 @@
-import { useState, useEffect } from "react";
-import toast from 'react-hot-toast';
-import { Label } from "./ui/label";
-import { Input } from "./ui/input";
-import { cn } from "../lib/utils";
-import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import VerifyEmailForm from "./verify-email-form";
-import useAuthStore from "../store/authstore";
-import { Loader2 } from 'lucide-react';
-import Loader from "./Loader";
+"use client"
 
+import { useState, useEffect } from "react"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { useForm } from "react-hook-form"
+import { Link, useNavigate } from "react-router-dom"
+import axios from "axios"
+import toast from "react-hot-toast"
+import useAuthStore from "../store/authstore"
+import CuteLoader from "./Loader"
+import { Eye, EyeOff, Github, Mail, User, Lock, ArrowRight, UserPlus } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
+import VerifyEmailForm from "./verify-email-form"
+import { TermsOfServiceModal } from "./terms-of-service"
+import { PrivacyPolicyModal } from "./privacy-policy"
 export default function SignupForm() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [showVerification, setShowVerification] = useState(false);
-  const { setUser, isLoggedIn, user  , isLoading: authLoading} = useAuthStore();
+  const [isLoading, setIsLoading] = useState(false)
+  const [showVerification, setShowVerification] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [acceptTerms, setAcceptTerms] = useState(false)
+  const [showTermsModal, setShowTermsModal] = useState(false)
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false)
+  const { setUser, isLoggedIn, user, isLoading: authLoading } = useAuthStore()
 
   const {
     register,
@@ -29,279 +39,351 @@ export default function SignupForm() {
       password: "",
       confirmPassword: "",
     },
-  });
-  
-  axios.defaults.withCredentials = true;
-  const navigate = useNavigate();
-  
+  })
+
+  axios.defaults.withCredentials = true
+  const navigate = useNavigate()
+
   // Check if user is already logged in but not verified
   useEffect(() => {
-
     if (isLoggedIn && user && !user.verified && !authLoading) {
-      setShowVerification(true);
+      setShowVerification(true)
       toast.error("Please verify your email to use the services", {
         duration: 4000,
-      });
+      })
     }
-  }, []);
-  
+  }, [])
+
   const onSubmit = async (data) => {
-    setIsLoading(true);
+    if (!acceptTerms) {
+      toast.error("Please accept the terms and conditions")
+      return
+    }
+
+    setIsLoading(true)
     try {
-      const username = `${data.firstname} ${data.lastname}`.trim();
+      const username = `${data.firstname} ${data.lastname}`.trim()
       const payload = {
         username,
         email: data.email,
-        password: data.password
-      };
+        password: data.password,
+      }
 
-      const response = await axios.post(
-        `${import.meta.env.VITE_BE_URL}/api/auth/register`,
-        payload,
-        {
-          withCredentials: true
-        }
-      );
+      const response = await axios.post(`${import.meta.env.VITE_BE_URL}/api/auth/register`, payload, {
+        withCredentials: true,
+      })
 
       if (response.data.success) {
-        setUser(response.data.user);
-        toast.success(response.data.message);
-        setShowVerification(true);
+        setUser(response.data.user)
+        toast.success(response.data.message)
+        setShowVerification(true)
       }
     } catch (error) {
-      console.error("Registration failed:", error);
-      toast.error(error.response?.data?.message || "Registration failed");
+      console.error("Registration failed:", error)
+      toast.error(error.response?.data?.message || "Registration failed")
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   // Show loading until auth state is fully determined
   if (authLoading) {
     return (
-     <Loader />
-    );
+      <div className="flex items-center justify-center min-h-[70vh]">
+        <CuteLoader variant="bunny" size="lg" text="Loading..." />
+      </div>
+    )
   }
 
   // Show verification form if needed
   if (showVerification) {
     return (
-      <VerifyEmailForm 
+      <VerifyEmailForm
         onVerified={() => {
-          setShowVerification(false);
-          toast.success("Email verified successfully");
-          navigate("/");
+          setShowVerification(false)
+          toast.success("Email verified successfully")
+          navigate("/")
         }}
         onCancel={() => {
-          setShowVerification(false);
+          toast.error("Verification failed")
+          navigate("/")
+          setShowVerification(false)
         }}
       />
-    );
+    )
   }
 
   const handleGitHubAuth = () => {
-    window.location.href = `${import.meta.env.VITE_BE_URL}/api/auth/github`;
-  };
+    window.location.href = `${import.meta.env.VITE_BE_URL}/api/auth/github`
+  }
 
   const handleGoogleAuth = () => {
-    window.location.href = `${import.meta.env.VITE_BE_URL}/api/auth/google`;
-  };
+    window.location.href = `${import.meta.env.VITE_BE_URL}/api/auth/google`
+  }
 
-  return (
-    <div className="shadow-lg mx-auto w-full max-w-md rounded-lg bg-white dark:bg-zinc-900 p-6 border border-gray-200 dark:border-zinc-800">
-      <h2 className="text-xl font-bold text-gray-900 dark:text-white">Welcome to Earn Bug</h2>
-      <p className="mt-2 max-w-sm text-sm text-gray-600 dark:text-gray-400">Create an account to get started with Earn Bug</p>
-
-      <form className="my-8" onSubmit={handleSubmit(onSubmit)}>
-        <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <LabelInputContainer>
-            <Label htmlFor="firstname" className="text-gray-900 dark:text-white">First name</Label>
-            <Input
-              id="firstname"
-              placeholder="Tyler"
-              type="text"
-              className="border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
-              {...register("firstname", {
-                required: "First name is required",
-                minLength: {
-                  value: 2,
-                  message: "First name must be at least 2 characters",
-                },
-              })}
-            />
-            {errors.firstname && <p className="text-sm text-red-500 mt-1">{errors.firstname.message}</p>}
-          </LabelInputContainer>
-          <LabelInputContainer>
-            <Label htmlFor="lastname" className="text-gray-900 dark:text-white">Last name</Label>
-            <Input
-              id="lastname"
-              placeholder="Durden"
-              type="text"
-              className="border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
-              {...register("lastname", {
-                required: "Last name is required",
-                minLength: {
-                  value: 2,
-                  message: "Last name must be at least 2 characters",
-                },
-              })}
-            />
-            {errors.lastname && <p className="text-sm text-red-500 mt-1">{errors.lastname.message}</p>}
-          </LabelInputContainer>
-        </div>
-
-        <LabelInputContainer className="mb-4">
-          <Label htmlFor="email" className="text-gray-900 dark:text-white">Email Address</Label>
-          <Input
-            id="email"
-            placeholder="you@example.com"
-            type="email"
-            className="border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
-            {...register("email", {
-              required: "Email is required",
-              pattern: {
-                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                message: "Invalid email address",
-              },
-            })}
-          />
-          {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>}
-        </LabelInputContainer>
-
-        <LabelInputContainer className="mb-4">
-          <Label htmlFor="password" className="text-gray-900 dark:text-white">Password</Label>
-          <Input
-            id="password"
-            placeholder="••••••••"
-            type="password"
-            className="border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
-            {...register("password", {
-              required: "Password is required",
-              minLength: {
-                value: 8,
-                message: "Password must be at least 8 characters",
-              },
-              pattern: {
-                value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=])[A-Za-z\d@#$%^&+=]{8,}$/,
-                message: "Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character",
-              },
-            })}
-          />
-          {errors.password && <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>}
-        </LabelInputContainer>
-
-        <LabelInputContainer className="mb-6">
-          <Label htmlFor="confirmPassword" className="text-gray-900 dark:text-white">Confirm Password</Label>
-          <Input
-            id="confirmPassword"
-            placeholder="••••••••"
-            type="password"
-            className="border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
-            {...register("confirmPassword", {
-              required: "Please confirm your password",
-              validate: (value) => value === watch("password") || "Passwords do not match",
-            })}
-          />
-          {errors.confirmPassword && <p className="text-sm text-red-500 mt-1">{errors.confirmPassword.message}</p>}
-        </LabelInputContainer>
-
-        <button
-          className="group relative block h-10 w-full rounded-md bg-blue-600 font-medium text-white hover:bg-blue-700 disabled:opacity-70 transition-colors"
-          type="submit"
-          disabled={isLoading}
-        >
-          {isLoading ? "Signing up..." : "Sign up →"}
-          <BottomGradient />
-        </button>
-
-        <div className="mt-4 text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Already have an account?{" "}
-            <Link to="/login" className="text-blue-500 hover:underline">
-              Log in
-            </Link>
-          </p>
-        </div>
-
-        <div className="my-6 flex items-center">
-          <div className="flex-grow h-[1px] bg-gray-300 dark:bg-zinc-700"></div>
-          <span className="mx-4 text-xs text-gray-500 dark:text-gray-400">OR</span>
-          <div className="flex-grow h-[1px] bg-gray-300 dark:bg-zinc-700"></div>
-        </div>
-
-        <div className="flex flex-col space-y-3">
-          <button
-            className="group relative flex h-10 w-full items-center justify-center space-x-2 rounded-md bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
-            type="button"
-            onClick={handleGitHubAuth}
-            disabled={isLoading}
-          >
-            <GitHubIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-            <span className="text-sm text-gray-700 dark:text-gray-300">Continue with GitHub</span>
-            <BottomGradient />
-          </button>
-          <button
-            className="group relative flex h-10 w-full items-center justify-center space-x-2 rounded-md bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
-            type="button"
-            onClick={handleGoogleAuth}
-            disabled={isLoading}
-          >
-            <GoogleIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-            <span className="text-sm text-gray-700 dark:text-gray-300">Continue with Google</span>
-            <BottomGradient />
-          </button>
-        </div>
-      </form>
-    </div>
-  );
-}
-
-const BottomGradient = () => {
   return (
     <>
-      <span className="absolute inset-x-0 -bottom-px block h-px w-full bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-0 transition duration-500 group-hover:opacity-100" />
-      <span className="absolute inset-x-10 -bottom-px mx-auto block h-px w-1/2 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
+      <Card className="w-full max-w-md mx-auto overflow-hidden border-purple-100 dark:border-purple-900/50 shadow-xl">
+        <div className="h-2 bg-gradient-to-r from-purple-500 to-pink-500"></div>
+        <CardHeader className="space-y-1 pt-6">
+          <div className="flex justify-center mb-2">
+            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+              <UserPlus className="h-6 w-6 text-white" />
+            </div>
+          </div>
+          <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
+          <CardDescription className="text-center">Enter your details to get started with EarnBug</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstname" className="text-sm font-medium">
+                  First name
+                </Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="firstname"
+                    placeholder="John"
+                    className="pl-10 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800"
+                    {...register("firstname", {
+                      required: "First name is required",
+                      minLength: {
+                        value: 2,
+                        message: "First name must be at least 2 characters",
+                      },
+                    })}
+                  />
+                </div>
+                {errors.firstname && <p className="text-sm text-red-500">{errors.firstname.message}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="lastname" className="text-sm font-medium">
+                  Last name
+                </Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="lastname"
+                    placeholder="Doe"
+                    className="pl-10 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800"
+                    {...register("lastname", {
+                      required: "Last name is required",
+                      minLength: {
+                        value: 2,
+                        message: "Last name must be at least 2 characters",
+                      },
+                    })}
+                  />
+                </div>
+                {errors.lastname && <p className="text-sm text-red-500">{errors.lastname.message}</p>}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium">
+                Email
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="email"
+                  placeholder="you@example.com"
+                  type="email"
+                  className="pl-10 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800"
+                  {...register("email", {
+                    required: "Email is required",
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: "Invalid email address",
+                    },
+                  })}
+                />
+              </div>
+              {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm font-medium">
+                Password
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="password"
+                  placeholder="••••••••"
+                  type={showPassword ? "text" : "password"}
+                  className="pl-10 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800"
+                  {...register("password", {
+                    required: "Password is required",
+                    minLength: {
+                      value: 8,
+                      message: "Password must be at least 8 characters",
+                    },
+                    pattern: {
+                      value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=])[A-Za-z\d@#$%^&+=]{8,}$/,
+                      message:
+                        "Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character",
+                    },
+                  })}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-sm font-medium">
+                Confirm Password
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="confirmPassword"
+                  placeholder="••••••••"
+                  type={showConfirmPassword ? "text" : "password"}
+                  className="pl-10 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800"
+                  {...register("confirmPassword", {
+                    required: "Please confirm your password",
+                    validate: (value) => value === watch("password") || "Passwords do not match",
+                  })}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>}
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox id="terms" checked={acceptTerms} onCheckedChange={setAcceptTerms} />
+              <label
+                htmlFor="terms"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                I agree to the{" "}
+                <button
+                  type="button"
+                  onClick={() => setShowTermsModal(true)}
+                  className="text-purple-600 hover:underline dark:text-purple-400"
+                >
+                  terms of service
+                </button>{" "}
+                and{" "}
+                <button
+                  type="button"
+                  onClick={() => setShowPrivacyModal(true)}
+                  className="text-purple-600 hover:underline dark:text-purple-400"
+                >
+                  privacy policy
+                </button>
+              </label>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full h-11 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-md shadow-purple-500/20"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <div className="flex items-center justify-center">
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  <span>Creating account...</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center">
+                  <span>Create account</span>
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </div>
+              )}
+            </Button>
+          </form>
+
+          <div className="mt-6 flex items-center">
+            <div className="flex-grow h-px bg-gray-200 dark:bg-gray-800"></div>
+            <span className="mx-4 text-xs text-gray-500 dark:text-gray-400">OR CONTINUE WITH</span>
+            <div className="flex-grow h-px bg-gray-200 dark:bg-gray-800"></div>
+          </div>
+
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <Button
+              variant="outline"
+              className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800"
+              onClick={handleGitHubAuth}
+              disabled={isLoading}
+            >
+              <Github className="mr-2 h-4 w-4" />
+              GitHub
+            </Button>
+            <Button
+              variant="outline"
+              className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800"
+              onClick={handleGoogleAuth}
+              disabled={isLoading}
+            >
+              <GoogleIcon className="mr-2 h-4 w-4" />
+              Google
+            </Button>
+          </div>
+        </CardContent>
+        <CardFooter className="flex justify-center pb-6">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Already have an account?{" "}
+            <Link
+              to="/login"
+              className="text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 font-medium"
+            >
+              Sign in
+            </Link>
+          </p>
+        </CardFooter>
+      </Card>
+
+      {/* Terms of Service Modal */}
+      <TermsOfServiceModal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} />
+
+      {/* Privacy Policy Modal */}
+      <PrivacyPolicyModal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
     </>
-  );
-};
-
-const LabelInputContainer = ({ children, className }) => {
-  return <div className={cn("flex w-full flex-col space-y-2", className)}>{children}</div>;
-};
-
-const GitHubIcon = (props) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
-    <path d="M9 18c-4.51 2-5-2-7-2" />
-  </svg>
-);
+  )
+}
 
 const GoogleIcon = (props) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <circle cx="12" cy="12" r="10" />
-    <path d="M8 12 L16 12" />
-    <path d="M12 8 L12 16" />
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" {...props}>
+    <path
+      fill="currentColor"
+      d="M12 22q-2.05 0-3.875-.788t-3.188-2.15-2.137-3.175T2 12q0-2.075.788-3.887t2.15-3.175 3.175-2.138T12 2q2.075 0 3.887.788t3.175 2.15 2.138 3.175T22 12q0 2.05-.788 3.875t-2.15 3.188-3.175 2.137T12 22Zm0-2q3.35 0 5.675-2.325T20 12q0-3.35-2.325-5.675T12 4Q8.65 4 6.325 6.325T4 12q0 3.35 2.325 5.675T12 20Zm0-8Z"
+    />
   </svg>
-);
+)

@@ -2,13 +2,13 @@
 
 import { useState } from "react"
 import { useForm } from "react-hook-form"
-import { Label } from "./ui/label"
-import { Input } from "./ui/input"
-import { Button } from "./ui/button"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import axios from "axios"
 import toast from "react-hot-toast"
 import { useNavigate } from "react-router-dom"
-import { X, Mail, ArrowLeft, CheckCircle, Eye, EyeOff, Lock } from "lucide-react"
+import { X, Mail, ArrowLeft, CheckCircle, Eye, EyeOff, Lock } from 'lucide-react'
 import { motion, AnimatePresence } from "framer-motion"
 
 export default function ForgotPasswordForm({ onClose }) {
@@ -47,7 +47,6 @@ export default function ForgotPasswordForm({ onClose }) {
   const onSubmitEmail = async (data) => {
     setIsLoading(true)
     try {
-    
       const response = await axios.post(`${import.meta.env.VITE_BE_URL}/api/auth/sendResetPasswordEmail`, {
         email: data.email,
       })
@@ -100,7 +99,12 @@ export default function ForgotPasswordForm({ onClose }) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-md rounded-lg bg-white dark:bg-zinc-900 p-6 shadow-lg border border-gray-200 dark:border-zinc-800 relative">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="mx-auto w-full max-w-md rounded-lg bg-white dark:bg-zinc-900 p-6 shadow-lg border border-gray-200 dark:border-zinc-800 relative"
+    >
       <button
         onClick={handleClose}
         className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -329,7 +333,7 @@ export default function ForgotPasswordForm({ onClose }) {
       <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
         <CuteCharacter currentStep={currentStep} />
       </div>
-    </div>
+    </motion.div>
   )
 }
 

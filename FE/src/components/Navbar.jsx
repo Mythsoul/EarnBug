@@ -1,7 +1,18 @@
+"use client"
+
 import { useState, useEffect } from "react"
-  import { Link, useNavigate, useLocation } from "react-router-dom"
-import { Menu, X } from 'lucide-react'
+import { Link, useNavigate, useLocation } from "react-router-dom"
+import { Menu, X, User, LogOut, Settings, Bell } from "lucide-react"
 import { Button } from "./ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu"
 import useAuthStore from "../store/authstore"
 import { ThemeToggle } from "./theme-toggle"
 import { cn } from "../lib/utils"
@@ -11,7 +22,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, isLoggedIn, setShowVerifyModal , isLoading } = useAuthStore()
+  const { user, isLoggedIn, setShowVerifyModal, isLoading } = useAuthStore()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -47,7 +58,7 @@ const Navbar = () => {
     if (!isLoggedIn) {
       return (
         <Link to="/login">
-          <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white">
+          <Button className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white shadow-md shadow-purple-500/20">
             Login
           </Button>
         </Link>
@@ -57,7 +68,7 @@ const Navbar = () => {
     if (!user?.verified) {
       return (
         <Button
-          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+          className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white shadow-md shadow-purple-500/20"
           onClick={() => setShowVerifyModal(true)}
         >
           Verify Email
@@ -66,12 +77,32 @@ const Navbar = () => {
     }
 
     return (
-      <Button
-        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
-        onClick={() => navigate("/logout")}
-      >
-        Logout
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+            <Avatar className="h-10 w-10 border-2 border-purple-200 dark:border-purple-800">
+              <AvatarImage src={user?.photoURL || ""} alt={user?.displayName || "User"} />
+              <AvatarFallback className="bg-gradient-to-br from-violet-500 to-purple-600 text-white">
+                {user?.username?.charAt(0) || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white dark:border-gray-900"></span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel>
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium">{user?.username|| "User"}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => navigate("/logout")}>
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Logout</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     )
   }
 
@@ -81,14 +112,14 @@ const Navbar = () => {
         "fixed w-full z-50 transition-all duration-300",
         scrolled
           ? "bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md shadow-sm"
-          : "bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm"
+          : "bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm",
       )}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0">
-              <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text">
+              <span className="text-2xl font-bold bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 text-transparent bg-clip-text">
                 EarnBug
               </span>
             </Link>
@@ -103,7 +134,7 @@ const Navbar = () => {
                   "px-3 py-2 rounded-md text-sm font-medium transition-colors",
                   isActive(link.path)
                     ? "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20"
-                    : "text-gray-700 dark:text-gray-200 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-50 dark:hover:bg-zinc-800/70"
+                    : "text-gray-700 dark:text-gray-200 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-50 dark:hover:bg-zinc-800/70",
                 )}
               >
                 {link.name}
@@ -111,13 +142,14 @@ const Navbar = () => {
             ))}
             <div className="ml-4 flex items-center space-x-2">
               <ThemeToggle />
-              
+             
               {renderAuthButton()}
             </div>
           </div>
 
           <div className="flex md:hidden items-center space-x-2">
             <ThemeToggle />
+      
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 dark:text-gray-200 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-zinc-800 focus:outline-none"
@@ -141,7 +173,7 @@ const Navbar = () => {
                   "block px-3 py-2 rounded-md text-base font-medium",
                   isActive(link.path)
                     ? "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20"
-                    : "text-gray-700 dark:text-gray-200 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-50 dark:hover:bg-zinc-800/70"
+                    : "text-gray-700 dark:text-gray-200 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-50 dark:hover:bg-zinc-800/70",
                 )}
                 onClick={() => setIsMenuOpen(false)}
               >
@@ -155,7 +187,7 @@ const Navbar = () => {
               {isLoggedIn ? (
                 !user?.verified ? (
                   <Button
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                    className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white shadow-md shadow-purple-500/20"
                     onClick={() => {
                       setShowVerifyModal(true)
                       setIsMenuOpen(false)
@@ -164,20 +196,38 @@ const Navbar = () => {
                     Verify Email
                   </Button>
                 ) : (
-                  <Button
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
-                    onClick={() => {
-                      navigate("/logout")
-                      setIsMenuOpen(false)
-                    }}
-                  >
-                    Logout
-                  </Button>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-3 px-3 py-2">
+                      <Avatar className="h-10 w-10 border-2 border-purple-200 dark:border-purple-800">
+                        <AvatarImage src={user?.photoURL || ""} alt={user?.username|| "User"} />
+                        <AvatarFallback className="bg-gradient-to-br from-violet-500 to-purple-600 text-white">
+                          {user?.username?.charAt(0) || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {user?.username || "User"}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
+                      </div>
+                    </div>
+                  
+                    <Button
+                      className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white shadow-md shadow-purple-500/20"
+                      onClick={() => {
+                        navigate("/logout")
+                        setIsMenuOpen(false)
+                      }}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Logout
+                    </Button>
+                  </div>
                 )
               ) : (
                 <Link to="/login" className="block w-full">
                   <Button
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                    className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white shadow-md shadow-purple-500/20"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Login

@@ -1,23 +1,30 @@
+"use client"
+
 import { useState, useEffect } from "react"
-import { Label } from "./ui/label"
-import { Input } from "./ui/input"
-import { cn } from "../lib/utils"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 import { useForm } from "react-hook-form"
 import { Link, useNavigate } from "react-router-dom"
 import axios from "axios"
 import toast from "react-hot-toast"
 import useAuthStore from "../store/authstore"
+import CuteLoader from "./Loader"
+import { Eye, EyeOff, Github, Mail, Lock, ArrowRight } from 'lucide-react'
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import VerifyEmailForm from "./verify-email-form"
-import Loader from "./Loader"
 import ForgotPasswordForm from "./ForgotPassword"
 
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [showVerification, setShowVerification] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
   axios.defaults.withCredentials = true
   const navigate = useNavigate()
-  const { setUser, isLoggedIn, user , isLoading: authLoading } = useAuthStore()
+  const { setUser, isLoggedIn, user, isLoading: authLoading } = useAuthStore()
 
   const {
     register,
@@ -38,7 +45,7 @@ export default function LoginForm() {
         duration: 4000,
       })
     }
-  }, [ ])
+  }, [])
 
   const onSubmit = async (data) => {
     setIsLoading(true)
@@ -53,9 +60,12 @@ export default function LoginForm() {
       if (response.data.success) {
         setUser(response.data.user)
         if (!response.data.user.verified) {
-          toast.error("Please verify your email to use the services , the verification code has been sent to your email", {
-            duration: 4000,
-          })
+          toast.error(
+            "Please verify your email to use the services, the verification code has been sent to your email",
+            {
+              duration: 4000,
+            },
+          )
           setShowVerification(true)
           return
         } else {
@@ -72,18 +82,24 @@ export default function LoginForm() {
       setIsLoading(false)
     }
   }
+
   const handleGitHubAuth = () => {
-    window.location.href = `${import.meta.env.VITE_BE_URL}/api/auth/github`;
-  };
+    window.location.href = `${import.meta.env.VITE_BE_URL}/api/auth/github`
+  }
 
   const handleGoogleAuth = () => {
-    window.location.href = `${import.meta.env.VITE_BE_URL}/api/auth/google`;
-  };
-  if(authLoading) {
-    return <Loader />
+    window.location.href = `${import.meta.env.VITE_BE_URL}/api/auth/google`
   }
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[70vh]">
+        <CuteLoader variant="bunny" size="lg" text="Loading..." />
+      </div>
+    )
+  }
+
   if (showVerification) {
-    console.log("Rendering verification form")
     return (
       <VerifyEmailForm
         onVerified={() => {
@@ -92,179 +108,174 @@ export default function LoginForm() {
           navigate("/")
         }}
         onCancel={() => {
+          toast.error("Verification failed")
+          navigate("/")
           setShowVerification(false)
         }}
       />
     )
   }
 
-  if(showForgotPassword) {
-    return (
-      <ForgotPasswordForm 
-        onClose={() => setShowForgotPassword(false)}
-      />
-    )
+  if (showForgotPassword) {
+    return <ForgotPasswordForm onClose={() => setShowForgotPassword(false)} />
   }
 
-  
   return (
-    <div className="shadow-lg mx-auto w-full max-w-md rounded-lg bg-white dark:bg-zinc-900 p-6 border border-gray-200 dark:border-zinc-800">
-      <h2 className="text-xl font-bold text-gray-900 dark:text-white">Welcome back to Earn Bug</h2>
-      <p className="mt-2 max-w-sm text-sm text-gray-600 dark:text-gray-400">
-        Login to your account to continue your journey
-      </p>
-
-      <form className="my-8" onSubmit={handleSubmit(onSubmit)}>
-        <LabelInputContainer className="mb-4">
-          <Label htmlFor="email" className="text-gray-900 dark:text-white">
-            Email Address
-          </Label>
-          <Input
-            id="email"
-            placeholder="you@example.com"
-            type="email"
-            className="border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
-            {...register("email", {
-              required: "Email is required",
-              pattern: {
-                value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-                message: "Invalid email address",
-              },
-            })}
-          />
-          {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>}
-        </LabelInputContainer>
-
-        <LabelInputContainer className="mb-6">
-          <div className="flex justify-between items-center">
-            <Label htmlFor="password" className="text-gray-900 dark:text-white">
-              Password
-            </Label>
-            <button 
-              type="button"
-              onClick={() => setShowForgotPassword(true)}
-              className="text-xs text-blue-500 hover:underline"
-            >
-              Forgot password?
-            </button>
+    <Card className="w-full max-w-md mx-auto overflow-hidden border-purple-100 dark:border-purple-900/50 shadow-xl">
+      <div className="h-2 bg-gradient-to-r from-purple-500 to-pink-500"></div>
+      <CardHeader className="space-y-1 pt-6">
+        <div className="flex justify-center mb-2">
+          <div className="h-12 w-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+            <Mail className="h-6 w-6 text-white" />
           </div>
-          <Input
-            id="password"
-            placeholder="••••••••"
-            type="password"
-            className="border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
-            {...register("password", {
-              required: "Password is required",
-              validate: (value) => {
-                if (value.length < 8) {
-                  return "Password must be at least 8 characters"
-                }
-                return true
-              },
-              minLength: {
-                value: 8,
-                message: "Password must be at least 8 characters",
-              },
-            })}
-          />
-          {errors.password && <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>}
-        </LabelInputContainer>
+        </div>
+        <CardTitle className="text-2xl font-bold text-center">Welcome back</CardTitle>
+        <CardDescription className="text-center">Enter your credentials to access your account</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-sm font-medium">
+              Email
+            </Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                id="email"
+                placeholder="you@example.com"
+                type="email"
+                className="pl-10 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800"
+                {...register("email", {
+                  required: "Email is required",
+                  pattern: {
+                    value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                    message: "Invalid email address",
+                  },
+                })}
+              />
+            </div>
+            {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
+          </div>
 
-        <button
-          className="group relative block h-10 w-full rounded-md bg-blue-600 font-medium text-white hover:bg-blue-700 disabled:opacity-70 transition-colors"
-          type="submit"
-          disabled={isLoading}
-        >
-          {isLoading ? "Logging in..." : "Log in →"}
-          <BottomGradient />
-        </button>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className="text-sm font-medium">
+                Password
+              </Label>
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(true)}
+                className="text-xs text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
+              >
+                Forgot password?
+              </button>
+            </div>
+            <div className="relative">
+              <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                id="password"
+                placeholder="••••••••"
+                type={showPassword ? "text" : "password"}
+                className="pl-10 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800"
+                {...register("password", {
+                  required: "Password is required",
+                  minLength: {
+                    value: 8,
+                    message: "Password must be at least 8 characters",
+                  },
+                })}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
+          </div>
 
-        <div className="mt-4 text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Don't have an account?{" "}
-            <Link to="/signup" className="text-blue-500 hover:underline">
-              Sign up
-            </Link>
-          </p>
+          
+
+          <Button
+            type="submit"
+            className="w-full h-11 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-md shadow-purple-500/20"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <div className="flex items-center justify-center">
+                <svg
+                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                <span>Logging in...</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center">
+                <span>Sign in</span>
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </div>
+            )}
+          </Button>
+        </form>
+
+        <div className="mt-6 flex items-center">
+          <div className="flex-grow h-px bg-gray-200 dark:bg-gray-800"></div>
+          <span className="mx-4 text-xs text-gray-500 dark:text-gray-400">OR CONTINUE WITH</span>
+          <div className="flex-grow h-px bg-gray-200 dark:bg-gray-800"></div>
         </div>
 
-        <div className="my-6 flex items-center">
-          <div className="flex-grow h-[1px] bg-gray-300 dark:bg-zinc-700"></div>
-          <span className="mx-4 text-xs text-gray-500 dark:text-gray-400">OR</span>
-          <div className="flex-grow h-[1px] bg-gray-300 dark:bg-zinc-700"></div>
-        </div>
-
-        <div className="flex flex-col space-y-3">
-          <button
-            className="group relative flex h-10 w-full items-center justify-center space-x-2 rounded-md bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
-            type="button"
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          <Button
+            variant="outline"
+            className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800"
             onClick={handleGitHubAuth}
+            disabled={isLoading}
           >
-            <GitHubIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-            <span className="text-sm text-gray-700 dark:text-gray-300">Continue with GitHub</span>
-            <BottomGradient />
-          </button>
-          <button
-            className="group relative flex h-10 w-full items-center justify-center space-x-2 rounded-md bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
-            type="button"
+            <Github className="mr-2 h-4 w-4" />
+            GitHub
+          </Button>
+          <Button
+            variant="outline"
+            className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800"
             onClick={handleGoogleAuth}
+            disabled={isLoading}
           >
-            <GoogleIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-            <span className="text-sm text-gray-700 dark:text-gray-300">Continue with Google</span>
-            <BottomGradient />
-          </button>
+            <GoogleIcon className="mr-2 h-4 w-4" />
+            Google
+          </Button>
         </div>
-      </form>
-    </div>
+      </CardContent>
+      <CardFooter className="flex justify-center pb-6">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Don't have an account?{" "}
+          <Link
+            to="/signup"
+            className="text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 font-medium"
+          >
+            Sign up
+          </Link>
+        </p>
+      </CardFooter>
+    </Card>
   )
 }
-
-const BottomGradient = () => {
-  return (
-    <>
-      <span className="absolute inset-x-0 -bottom-px block h-px w-full bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-0 transition duration-500 group-hover:opacity-100" />
-      <span className="absolute inset-x-10 -bottom-px mx-auto block h-px w-1/2 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
-    </>
-  )
-}
-
-const LabelInputContainer = ({ children, className }) => {
-  return <div className={cn("flex w-full flex-col space-y-2", className)}>{children}</div>
-}
-
-const GitHubIcon = (props) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
-    <path d="M9 18c-4.51 2-5-2-7-2" />
-  </svg>
-)
 
 const GoogleIcon = (props) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <circle cx="12" cy="12" r="10" />
-    <path d="M8 12 L16 12" />
-    <path d="M12 8 L12 16" />
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" {...props}>
+    <path
+      fill="currentColor"
+      d="M12 22q-2.05 0-3.875-.788t-3.188-2.15-2.137-3.175T2 12q0-2.075.788-3.887t2.15-3.175 3.175-2.138T12 2q2.075 0 3.887.788t3.175 2.15 2.138 3.175T22 12q0 2.05-.788 3.875t-2.15 3.188-3.175 2.137T12 22Zm0-2q3.35 0 5.675-2.325T20 12q0-3.35-2.325-5.675T12 4Q8.65 4 6.325 6.325T4 12q0 3.35 2.325 5.675T12 20Zm0-8Z"
+    />
   </svg>
 )

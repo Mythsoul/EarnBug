@@ -1,13 +1,16 @@
+"use client"
+
 import { useState } from "react"
 import { useForm } from "react-hook-form"
-import { Label } from "./ui/label"
-import { Input } from "./ui/input"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 import axios from "axios"
 import toast from "react-hot-toast"
 import { useNavigate } from "react-router-dom"
 import useAuthStore from "../store/authstore"
-import { Button } from "./ui/button"
+import { Button } from "@/components/ui/button"
 import { X } from "lucide-react"
+import { motion } from "framer-motion"
 
 export default function VerifyEmailForm({ onVerified, onCancel }) {
   const [isLoading, setIsLoading] = useState(false)
@@ -55,7 +58,7 @@ export default function VerifyEmailForm({ onVerified, onCancel }) {
     setResendLoading(true)
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BE_URL}/api/auth/esendVerificationEmail`,
+        `${import.meta.env.VITE_BE_URL}/api/auth/resendVerificationEmail`,
         {},
         { withCredentials: true },
       )
@@ -78,7 +81,12 @@ export default function VerifyEmailForm({ onVerified, onCancel }) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-md rounded-lg bg-white dark:bg-zinc-900 p-6 shadow-lg border border-gray-200 dark:border-zinc-800 relative">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="mx-auto w-full max-w-md rounded-lg bg-white dark:bg-zinc-900 p-6 shadow-lg border border-gray-200 dark:border-zinc-800 relative"
+    >
       <button
         onClick={handleClose}
         className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -159,6 +167,6 @@ export default function VerifyEmailForm({ onVerified, onCancel }) {
           </p>
         </div>
       </form>
-    </div>
+    </motion.div>
   )
 }
