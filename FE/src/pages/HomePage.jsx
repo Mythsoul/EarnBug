@@ -59,6 +59,13 @@ const HomePage = () => {
       link: "/chatbot",
       color: "from-amber-500 to-orange-500",
     },
+    {
+      title : "GIF Generator",
+      description: "Create animated GIFs from images or videos with customizable effects.",
+      icon: <ImageIcon className="h-10 w-10 text-primary" />,
+      link: "/gif-generator",
+      color: "from-pink-500 to-red-500",
+    }
   ]
 
   const benefits = [

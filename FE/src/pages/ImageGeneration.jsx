@@ -110,12 +110,41 @@ const ImageGeneration = () => {
 
       // Try with third API key
       toast.error("API quota exceeded. Trying one last time")
+      try {
+        const thirdResponse = await axios({
+          method: "post",
+          url: modelEndpoints[aimodel],
+          data: payload,
+          headers: {
+            Authorization: `Bearer ${import.meta.env.VITE_STABILITY_API_KEY3}`,
+            Accept: "image/*",
+            "Content-Type": "multipart/form-data",
+          },
+          responseType: "arraybuffer",
+          withCredentials: false,
+        })
+
+        if (thirdResponse.status === 200) {
+          const base64Image = btoa(
+            new Uint8Array(thirdResponse.data).reduce((data, byte) => data + String.fromCharCode(byte), ""),
+          )
+          setGeneratedImage(`data:image/webp;base64,${base64Image}`)
+          toast.success("Image generated successfully!")
+          setActiveTab("result")
+          return
+        }
+      } catch (error) {
+        if (error.response?.status !== 402) throw error
+      }
+
+      // Try with fourth API key
+      toast.error("API quota exceeded. Final attempt")
       const finalResponse = await axios({
         method: "post",
         url: modelEndpoints[aimodel],
         data: payload,
         headers: {
-          Authorization: `Bearer ${import.meta.env.VITE_STABILITY_API_KEY3}`,
+          Authorization: `Bearer ${import.meta.env.VITE_STABILITY_API_KEY4}`,
           Accept: "image/*",
           "Content-Type": "multipart/form-data",
         },
@@ -133,7 +162,7 @@ const ImageGeneration = () => {
         return
       }
 
-      throw new Error("Api quota exceeded . Please try again later cause i am broke : > ");   
+      throw new Error("Api quota exceeded. Please try again later cause i am broke : >");   
     } catch (err) {
       console.error("Error generating image:", err)
       toast.error(err.message || "Failed to generate image. Please try again.")
