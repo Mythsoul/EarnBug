@@ -107,23 +107,7 @@ const HomePage = () => {
                 conversion, and intelligent conversations.
               </p>
 
-              <div className="mt-10 flex flex-wrap justify-center gap-4">
-                <Link to="/image-generation">
-                  <Button
-                    size="lg"
-                    className="bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-purple-500/20"
-                  >
-                    Get Started
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link to="/chatbot">
-                  <Button size="lg" variant="outline" className="border-purple-200 dark:border-purple-800 shadow-lg">
-                    Try AI Chat
-                    <MessageSquare className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
+              
             </div>
           </div>
         </div>
@@ -168,8 +152,10 @@ const HomePage = () => {
 
                 <CardFooter>
                   <Link to={feature.link} className="w-full">
-                    <Button className="w-full bg-gradient-to-r from-violet-600 to-purple-600 text-white">
-                      Try Now <ArrowRight className="ml-2 h-4 w-4" />
+                    <Button className="w-full bg-gradient-to-r from-violet-600 to-purple-600 text-white" asChild>
+                      <div>
+                        Try Now <ArrowRight className="ml-2 h-4 w-4" />
+                      </div>
                     </Button>
                   </Link>
                 </CardFooter>
@@ -212,9 +198,12 @@ const HomePage = () => {
                   <Button
                     size="lg"
                     className="bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-purple-500/20"
+                    asChild
                   >
-                    Start Creating Now
-                    <Sparkles className="ml-2 h-4 w-4" />
+                    <div>
+                      Start Creating Now
+                      <Sparkles className="ml-2 h-4 w-4" />
+                    </div>
                   </Button>
                 </Link>
               </div>
@@ -260,7 +249,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      <style jsx>{`
+      <style>{`
         @keyframes blob {
           0% {
             transform: translate(0px, 0px) scale(1);
